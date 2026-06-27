@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:replace="~{base :: layout(~{::content})}">
+<th:block th:fragment="content">
+
+    <!-- Stats - Responsive Grid -->
+    <div class="row g-2 g-md-3 mb-3 mb-md-4">
+        <div class="col-6 col-md-3" th:each="card : ${cards}">
+            <div class="card text-center border-0 shadow-sm">
+                <div class="card-body p-2 p-md-3">
+                    <h6 class="text-muted mb-2 small" th:text="${card.title}">Pending Cases</h6>
+                    <h2 class="fw-bold text-success mb-0 fs-3 fs-md-2" th:text="${card.value}">15</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 g-md-3 g-lg-4">
+        <!-- Map - Full width on mobile, 60% on desktop -->
+        <div class="col-12 col-lg-7 order-1 order-lg-1">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-2 p-md-3">
+                    <h5 class="fw-bold text-success mb-2 mb-md-3 fs-6 fs-md-5">Live Case Map</h5>
+                    <div id="dashMap" class="rounded" style="height:300px; background:#f0f0f0; border:2px solid #ddd;">
+                        <div class="d-flex align-items-center justify-content-center h-100 text-muted" id="mapLoading">
+                            <div class="text-center">
+                                <div class="spinner-border text-success mb-2 spinner-border-sm" role="status"></div>
+                                <div class="small">Loading map...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Chart & Recent Reports - Stack on mobile -->
+        <div class="col-12 col-lg-5 order-2 order-lg-2">
+            <div class="card border-0 shadow-sm mb-2 mb-md-3">
+                <div class="card-body p-2 p-md-3">
+                    <h5 class="fw-bold text-success mb-2 mb-md-3 fs-6 fs-md-5">Cases by Status</h5>
+                    <div class="chart-container" style="position: relative; height: 200px;">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-2 p-md-3">
+                    <h5 class="fw-bold text-success mb-2 mb-md-3 fs-6 fs-md-5">Recent Reports</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="small">ID</th>
+                                    <th class="small">Type</th>
+                                    <th class="small">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="report : ${recentReports}">
+                                    <td class="small" th:text="${report.id}">21</td>
+                                    <td class="small text-truncate" style="max-width: 100px;" th:text="${report.type}">
+                                        Fire</td>
+                                    <td>
+                                        <span class="badge small"
+                                            th:class="${'badge ' + (report.status == 'PENDING' ? 'status-pending' : report.status == 'IN_PROGRESS' ? 'status-in-progress' : report.status == 'RESOLVED' ? 'status-resolved' : 'bg-secondary')}"
+                                            th:text="${report.status == 'IN_PROGRESS' ? 'IN PROGRESS' : report.status}">PENDING</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Dashboard: DOMContentLoaded ✅');
+            console.log('Leaflet loaded?', typeof L !== 'undefined');
+            console.log('Chart.js loaded?', typeof Chart !== 'undefined');
+
+            // Check if Leaflet is loaded
+            if (typeof L === 'undefined') {
+                console.error('❌ Leaflet (L) is not defined! Map will not work.');
+                return;
+            }
+
+            // Leaflet map - RESPONSIVE
+            console.log('Initializing dashboard map...');
+
+            const isMobile = window.innerWidth < 768;
+
+            // Remove loading spinner
+            const loadingDiv = document.getElementById('mapLoading');
+            if (loadingDiv) loadingDiv.remove();
+
+            const map = L.map('dashMap', {
+                zoomControl: !isMobile,
+                touchZoom: true,
+                scrollWheelZoom: !isMobile,
+                dragging: true
+            }).setView([-1.9456, 30.0606], isMobile ? 11 : 12);
+
+            const satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                attribution: '© Google Maps'
+            });
+
+            const normalLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            });
+
+            satelliteLayer.addTo(map);
+
+            const baseMaps = {
+                "Satellite Map": satelliteLayer,
+                "Normal Map": normalLayer
+            };
+
+            L.control.layers(baseMaps).addTo(map);
+
+            if (isMobile) {
+                L.control.zoom({ position: 'bottomright' }).addTo(map);
+            }
+
+            // Responsive map resize handler
+            let resizeTimeout;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function () {
+                    map.invalidateSize();
+                }, 250);
+            });
+
+            // Force map to refresh after tiles load
+            setTimeout(() => map.invalidateSize(), 100);
+
+            console.log('Map initialized ✅ - Center: Kigali [-1.9456, 30.0606]');
+            const markers = new Map();
+            function color(status) {
+                const s = (status || '').toUpperCase();
+                return s === 'PENDING' ? '#ffc107' : s === 'IN_PROGRESS' ? '#fd7e14' : s === 'RESOLVED' ? '#0d6efd' : 'black';
+            }
+            function upsert(r) {
+                if (!r.latitude || !r.longitude) {
+                    console.warn(`⚠️ Report ${r.id} has no coordinates - skipping marker`);
+                    return;
+                }
+                let m = markers.get(r.id);
+                if (!m) {
+                    console.log(`➕ Creating marker for report ${r.id} at [${r.latitude}, ${r.longitude}]`);
+                    m = L.circleMarker([r.latitude, r.longitude], {
+                        radius: 7,
+                        color: color(r.investigationStatus),
+                        fillColor: color(r.investigationStatus),
+                        fillOpacity: 0.7,
+                        weight: 2
+                    }).addTo(map);
+                    markers.set(r.id, m);
+                    console.log(`✅ Marker ${r.id} added to map`);
+                }
+                m.setStyle({ color: color(r.investigationStatus), fillColor: color(r.investigationStatus) });
+                m.bindPopup(`<b>${r.pollutionCategory}</b><br>Status: ${r.investigationStatus}<br>Location: ${r.location || 'N/A'}`);
+            }
+            async function load() {
+                try {
+                    console.log('📡 Fetching reports from /api/reports/public...');
+                    const res = await fetch('/api/reports/public');
+                    if (!res.ok) throw new Error('Failed to fetch reports: ' + res.status);
+                    const data = await res.json();
+                    console.log('📊 Dashboard loaded', data.length, 'total reports');
+
+                    // Dashboard map shows only active or resolved reports
+                    const displayReports = data.filter(r => r.investigationStatus !== 'PENDING');
+                    console.log('🗺️ Displaying', displayReports.length, 'reports (filtered out PENDING)');
+
+                    displayReports.forEach((r, idx) => {
+                        console.log(`Report ${idx + 1}:`, {
+                            id: r.id,
+                            type: r.pollutionCategory,
+                            status: r.investigationStatus,
+                            lat: r.latitude,
+                            lng: r.longitude,
+                            hasCoords: !!(r.latitude && r.longitude)
+                        });
+                        upsert(r);
+                    });
+
+                    if (displayReports.length > 0) {
+                        console.log('✅ Map should now show', displayReports.filter(r => r.latitude && r.longitude).length, 'markers');
+                    }
+                } catch (e) {
+                    console.error('❌ Error loading reports:', e);
+                }
+            }
+            load();
+            // Live updates
+            if (window.SockJS && window.Stomp) {
+                const socket = new SockJS('/ws');
+                const client = Stomp.over(socket);
+                client.connect({}, () => {
+                    client.subscribe('/topic/reports', msg => { try { upsert(JSON.parse(msg.body)); } catch (e) { } });
+                });
+            }
+
+            // Chart.js status distribution
+            async function renderChart() {
+                if (typeof Chart === 'undefined') {
+                    console.error('❌ Chart.js is not loaded! Chart will not render.');
+                    return;
+                }
+                try {
+                    console.log('Fetching stats for chart...');
+                    const res = await fetch('/api/reports/stats/InvestigationStatus');
+                    if (res.ok) {
+                        const stats = await res.json();
+                        console.log('Chart stats (server):', stats);
+                        const labels = Object.keys(stats);
+                        const values = labels.map(k => stats[k]);
+
+                        const colorMap = { PENDING: '#ffc107', IN_PROGRESS: '#fd7e14', RESOLVED: '#0d6efd' };
+                        const bgColors = labels.map(l => colorMap[l.toUpperCase()] || 'gray');
+
+                        new Chart(document.getElementById('statusChart'), {
+                            type: 'doughnut',
+                            data: { labels, datasets: [{ data: values, backgroundColor: bgColors }] },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: window.innerWidth < 576 ? 'bottom' : 'right',
+                                        labels: {
+                                            padding: window.innerWidth < 576 ? 8 : 12,
+                                            font: { size: window.innerWidth < 576 ? 10 : 12 }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                        console.log('Chart rendered ✅ (server data)');
+                        return;
+                    }
+                    // Fallback for citizens: build chart from public reports
+                    console.warn('⚠️ Stats endpoint returned', res.status, '- falling back to public reports for chart');
+                    const res2 = await fetch('/api/reports/public');
+                    if (!res2.ok) throw new Error('Failed to fetch public reports: ' + res2.status);
+                    const data = await res2.json();
+                    // Optionally exclude pending reports from chart to match dashboard map policy
+                    const filtered = data.filter(r => r.investigationStatus !== 'PENDING');
+                    const counts = filtered.reduce((acc, r) => {
+                        const s = (r.investigationStatus || '').toUpperCase();
+                        acc[s] = (acc[s] || 0) + 1; return acc;
+                    }, {});
+                    const labels = ['PENDING', 'IN_PROGRESS', 'RESOLVED'];
+                    const values = labels.map(k => counts[k] || 0);
+                    new Chart(document.getElementById('statusChart'), {
+                        type: 'doughnut',
+                        data: { labels, datasets: [{ data: values, backgroundColor: ['#ffc107', '#fd7e14', '#0d6efd'] }] },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: window.innerWidth < 576 ? 'bottom' : 'right',
+                                    labels: {
+                                        padding: window.innerWidth < 576 ? 8 : 12,
+                                        font: { size: window.innerWidth < 576 ? 10 : 12 }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    console.log('Chart rendered ✅ (client fallback)');
+                } catch (e) {
+                    console.error('❌ Error rendering chart:', e);
+                }
+            }
+            renderChart();
+        });
+    </script>
+
+</th:block>
+
+</html>

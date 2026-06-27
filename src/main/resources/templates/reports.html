@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:replace="~{base :: layout(~{::content})}">
+<th:block th:fragment="content">
+
+    <!-- Reports Under Review Section - Hidden for Admin -->
+    <div id="reviewSection" style="display: none;">
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
+            <h5 class="mb-0 text-success fw-bold">Reports Under Review</h5>
+            <span class="badge bg-primary" id="pendingCount">0</span>
+        </div>
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" id="reviewTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>Reporter</th>
+                                <th>Region</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>Reported At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reviewTbody">
+                            <tr><td colspan="8" class="text-center text-muted py-4">Loading reports...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <hr class="my-4 border-2 border-success opacity-25">
+    </div>
+
+    <!-- All Reports Section -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0 text-success fw-bold">All Reports</h5>
+    </div>
+
+    <!-- Controls & Filters -->
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-end mb-3">
+        <div class="d-flex flex-wrap gap-2">
+            <div>
+                <label class="form-label small mb-1">Type</label>
+                <select id="fltType" class="form-select form-select-sm shadow-sm">
+                    <option value="">All</option>
+                    <option value="Air Pollution">Air Pollution</option>
+                    <option value="Water Pollution">Water Pollution</option>
+                    <option value="Noise Pollution">Noise Pollution</option>
+                    <option value="Soil Pollution">Soil Pollution</option>
+                    <option value="Chemical Pollution">Chemical Pollution</option>
+                    <option value="Waste Dumping">Waste Dumping</option>
+                    <option value="Smoke Pollution">Smoke Pollution</option>
+                    <option value="Other">Other Pollution Type</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small mb-1">Status</label>
+                <select id="fltStatus" class="form-select form-select-sm shadow-sm">
+                    <option value="">All</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                    <option value="REJECTED">Rejected</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small mb-1">Region</label>
+                <select id="fltRegion" class="form-select form-select-sm shadow-sm">
+                    <option value="">All</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label small mb-1">From</label>
+                <input type="date" id="fltFrom" class="form-control form-control-sm shadow-sm" />
+            </div>
+            <div>
+                <label class="form-label small mb-1">To</label>
+                <input type="date" id="fltTo" class="form-control form-control-sm shadow-sm" />
+            </div>
+            <div class="input-group input-group-sm shadow-sm">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input id="fltText" type="text" class="form-control" placeholder="Search description/location" />
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">Reset</button>
+            <button class="btn btn-success btn-sm" onclick="applyFilters()">Apply</button>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-success btn-sm" onclick="exportExcel()"><i class="bi bi-filetype-csv"></i> Export CSV</button>
+        </div>
+    </div>
+
+    <!-- Reports Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="reportsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Region</th>
+                            <th>Location</th>
+                            <th>Reported</th>
+                            <th>Status</th>
+                            <th id="actionsHeader" style="width:160px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reportsTbody">
+                        <tr><td colspan="7" class="text-center text-muted py-4">Loading reports...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Detail Modal -->
+    <div class="modal fade" id="reportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Case Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reportDetail" class="small"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Detail Modal -->
+    <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">Review Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="reviewDetail"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger d-none" id="rejectBtn">Reject</button>
+                    <button class="btn btn-info d-none" id="approveBtn">Mark In Progress</button>
+                    <button class="btn btn-success d-none" id="resolveBtn">Mark Resolved</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let reportsCache = [];
+        let reviewReports = [];
+        let regionsCache = [];
+        let usersCache = [];
+        let isAdmin = false;
+        let isAuthority = false;
+        let currentReviewId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const userRes = await fetch('/api/users/current');
+                if (userRes.ok) {
+                    const user = await userRes.json();
+                    isAdmin = user.roles && user.roles.includes('ADMIN');
+                    isAuthority = user.roles && user.roles.includes('ENVIRONMENTAL_AUTHORITY');
+                    
+                    // Hide review section for admin users
+                    if (isAdmin) {
+                        document.getElementById('reviewSection').style.display = 'none';
+                    } else {
+                        document.getElementById('reviewSection').style.display = 'block';
+                    }
+                }
+            } catch {}
+            Promise.all([loadRegions(), loadReports(), loadUsers()]).then(() => applyFilters());
+        });
+
+        async function loadRegions(){
+            try { const r = await fetch('/api/regions'); if(!r.ok) return; regionsCache = await r.json(); populateRegionFilter(); } catch {}
+        }
+        function populateRegionFilter(){
+            const sel = document.getElementById('fltRegion');
+            sel.innerHTML = '<option value="">All</option>' + regionsCache.map(x => `<option value="${escapeAttr(x.name)}">${escapeHtml(x.name)}</option>`).join('');
+        }
+
+        async function loadUsers() {
+            try { const r = await fetch('/api/users'); if(!r.ok) return; usersCache = await r.json(); } catch {}
+        }
+
+        async function loadReports(){
+            try {
+                const res = await fetch('/api/reports');
+                if(!res.ok) throw new Error('Failed to load reports');
+                reportsCache = await res.json();
+
+                // Process review reports only if not admin
+                if (!isAdmin) {
+                    reviewReports = reportsCache.filter(r => r.investigationStatus === 'PENDING' || r.investigationStatus === 'IN_PROGRESS');
+                    renderReviewReports();
+                }
+
+                applyFilters();
+            } catch(err){
+                document.getElementById('reportsTbody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading reports</td></tr>';
+                if (!isAdmin) {
+                    document.getElementById('reviewTbody').innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading reports</td></tr>';
+                }
+            }
+        }
+
+        function renderReviewReports(){
+            // Only render if not admin
+            if (isAdmin) return;
+            
+            const tbody = document.getElementById('reviewTbody');
+            document.getElementById('pendingCount').textContent = reviewReports.length;
+            if(reviewReports.length === 0){
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">No reports to review.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = reviewReports.sort((a,b)=> new Date(b.reportedAt) - new Date(a.reportedAt)).map(r => {
+                const regionName = r.region && r.region.name ? r.region.name : '';
+                return `<tr>
+                    <td>${r.id}</td>
+                    <td>${escapeHtml(r.pollutionCategory||'')}</td>
+                    <td>${escapeHtml(r.reporter||'')}</td>
+                    <td>${escapeHtml(regionName)}</td>
+                    <td>${escapeHtml(r.location||'')} (${r.latitude??''}, ${r.longitude??''})</td>
+                    <td>${statusBadge(r.investigationStatus)}</td>
+                    <td>${formatDateTime(r.reportedAt)}</td>
+                    <td>
+                        <button class='btn btn-sm btn-outline-primary me-1 mb-1' onclick='openReview(${r.id})'><i class='bi bi-eye'></i> </button>
+                        ${r.investigationStatus === 'PENDING' ? 
+                            `<button class='btn btn-sm btn-info text-white me-1 mb-1' onclick='updateStatusWithAlert(${r.id}, "IN_PROGRESS", "Report marked In Progress.")'><i class='bi bi-gear'></i> </button>` : ''}
+                        ${r.investigationStatus === 'IN_PROGRESS' ? 
+                            `<button class='btn btn-sm btn-warning me-1 mb-1' onclick='updateStatusWithAlert(${r.id}, "PENDING", "Report reverted to Pending.")'><i class='bi bi-arrow-counterclockwise'></i>  </button>` : ''}
+                        <button class='btn btn-sm btn-success mb-1' onclick='quickResolve(${r.id})'><i class='bi bi-check-circle'></i> </button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function openReview(id){
+            const r = reviewReports.find(x => x.id === id);
+            if(!r) return;
+            currentReviewId = id;
+            
+            const reporterUser = usersCache.find(u => u.username === r.reporter);
+            const reporterPhone = reporterUser && reporterUser.phone ? reporterUser.phone : 'N/A';
+
+            const region = r.region && r.region.name ? r.region.name : '';
+            const html = `
+                <div class='row g-3'>
+                    <div class='col-md-6'><strong>Type:</strong> ${escapeHtml(r.pollutionCategory||'')}</div>
+                    <div class='col-md-6'><strong>Region:</strong> ${escapeHtml(region)}</div>
+                    <div class='col-md-6'><strong>Location:</strong> ${escapeHtml(r.location||'')} (${r.latitude??''}, ${r.longitude??''})</div>
+                    <div class='col-md-6'><strong>Reporter:</strong> ${escapeHtml(r.reporter||'')}</div>
+                    <div class='col-md-6'><strong>Reported At:</strong> ${formatDateTime(r.reportedAt)}</div>
+                    <div class='col-md-6'><strong>Reporter Phone:</strong> ${escapeHtml(reporterPhone)}</div>
+                    <div class='col-md-6'><strong>Description:</strong><br>${escapeHtml(r.description||'')}</div>
+                    <div class='col-md-6'><strong>Status:</strong> ${statusBadge(r.investigationStatus)}</div>
+                    ${r.mediaPath ? `<div class='col-md-12'><strong>Media:</strong><br>${mediaPreview(r.mediaPath)}</div>` : ''}
+                </div>`;
+            document.getElementById('reviewDetail').innerHTML = html;
+
+            const approveBtn = document.getElementById('approveBtn');
+            const resolveBtn = document.getElementById('resolveBtn');
+            const rejectBtn = document.getElementById('rejectBtn');
+
+            if (r.investigationStatus === 'PENDING') {
+                approveBtn.classList.remove('d-none');
+                resolveBtn.classList.add('d-none');
+                rejectBtn.classList.remove('d-none');
+                approveBtn.onclick = () => updateStatusWithAlert(id, 'IN_PROGRESS', 'Report marked In Progress.');
+                rejectBtn.onclick = () => rejectReport(id);
+            } else if (r.investigationStatus === 'IN_PROGRESS') {
+                approveBtn.classList.add('d-none');
+                resolveBtn.classList.remove('d-none');
+                rejectBtn.classList.add('d-none');
+                resolveBtn.onclick = () => updateStatusWithAlert(id, 'RESOLVED', 'Report marked as Resolved.');
+            }
+
+            new bootstrap.Modal(document.getElementById('reviewModal')).show();
+        }
+
+        async function updateStatusWithAlert(id, status, message){
+            try {
+                const res = await fetch(`/api/reports/${id}/status?status=${encodeURIComponent(status)}`, { method: 'PUT' });
+                if(!res.ok) throw new Error('Status update failed');
+                alert(message);
+                const modEl = document.getElementById('reviewModal');
+                const mod = bootstrap.Modal.getInstance(modEl);
+                if(mod) mod.hide();
+                await loadReports();
+            } catch(err){ alert('Error: ' + err.message); }
+        }
+
+        async function quickResolve(id){
+            if(!confirm('Mark this report as Resolved?')) return;
+            await updateStatusWithAlert(id, 'RESOLVED', 'Report marked as Resolved.');
+        }
+
+        async function rejectReport(id){
+            if(!confirm('Reject this report?')) return;
+            try {
+                const res = await fetch(`/api/reports/${id}/status?status=REJECTED`, { method: 'PUT' });
+                if(!res.ok) throw new Error('Failed to reject report');
+                alert('Report has been rejected.');
+                const modEl = document.getElementById('reviewModal');
+                const mod = bootstrap.Modal.getInstance(modEl);
+                if(mod) mod.hide();
+                await loadReports();
+            } catch(err){ alert('Error: ' + err.message); }
+        }
+
+        function applyFilters(){
+            const type = val('fltType');
+            const status = val('fltStatus');
+            const region = val('fltRegion');
+            const txt = val('fltText').toLowerCase();
+            const from = dateVal('fltFrom');
+            const to = dateVal('fltTo');
+
+            // Use the full reportsCache for the "All Reports" table
+            const filtered = reportsCache.filter(r => {
+                if(type && (r.pollutionCategory || '').toUpperCase() !== type.toUpperCase()) return false;
+                if(status && (r.investigationStatus || '') !== status) return false;
+                const reg = r.region && r.region.name ? r.region.name : '';
+                if(region && reg !== region) return false;
+                if(txt){
+                    const blob = `${r.description||''} ${r.location||''}`.toLowerCase();
+                    if(!blob.includes(txt)) return false;
+                }
+                if(from && (!r.reportedAt || new Date(r.reportedAt) < from)) return false;
+                if(to && (!r.reportedAt || new Date(r.reportedAt) > endOfDay(to))) return false;
+                return true;
+            });
+            renderReports(filtered);
+        }
+
+        function resetFilters(){
+            ['fltType','fltStatus','fltRegion','fltText','fltFrom','fltTo'].forEach(id => document.getElementById(id).value = '');
+            applyFilters();
+        }
+
+        function renderReports(list){
+            const tbody = document.getElementById('reportsTbody');
+            if(list.length === 0){
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No reports found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.sort((a,b) => new Date(b.reportedAt) - new Date(a.reportedAt)).map(r => {
+                const regionName = r.region && r.region.name ? r.region.name : '';
+                return `<tr>
+                    <td>${r.id}</td>
+                    <td>${escapeHtml(r.pollutionCategory || '')}</td>
+                    <td>${escapeHtml(regionName)}</td>
+                    <td>${escapeHtml(r.location || '')}</td>
+                    <td>${formatDateTime(r.reportedAt)}</td>
+                    <td>${statusBadge(r.investigationStatus)}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewReport(${r.id})" title="View Details"><i class="bi bi-eye"></i></button>
+                            ${isAdmin ? `
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteReport(${r.id})" title="Delete"><i class="bi bi-trash"></i></button>
+                            ` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function deleteReport(id){
+            if(!confirm('Are you sure you want to delete this report?')) return;
+            try { 
+                const res = await fetch(`/api/reports/${id}`, { 
+                    method: 'DELETE' 
+                }); 
+                if(!res.ok) throw new Error('Delete failed'); 
+                await loadReports(); 
+                alert('Report deleted successfully!');
+            } catch(err){ 
+                console.error('Delete error:', err);
+                alert('Error deleting report: ' + err.message); 
+            }
+        }
+
+        function viewReport(id){
+            const r = reportsCache.find(x => x.id === id);
+            if(!r) return;
+
+            const reporterUser = usersCache.find(u => u.username === r.reporter);
+            const reporterPhone = reporterUser && reporterUser.phone ? reporterUser.phone : 'N/A';
+
+            const region = r.region && r.region.name ? r.region.name : '';
+            const html = `
+                <div class="row g-3">
+                    <div class="col-md-6"><strong>Type:</strong> ${escapeHtml(r.pollutionCategory||'')}</div>
+                    <div class="col-md-6"><strong>Region:</strong> ${escapeHtml(region)}</div>
+                    <div class="col-md-6"><strong>Location:</strong> ${escapeHtml(r.location||'')} (${r.latitude??''}, ${r.longitude??''})</div>
+                    <div class="col-md-6"><strong>Reporter:</strong> ${escapeHtml(r.reporter||'')}</div>
+                    <div class="col-md-6"><strong>Reported:</strong> ${formatDateTime(r.reportedAt)}</div>
+                    <div class="col-md-6"><strong>Reporter Phone:</strong> ${escapeHtml(reporterPhone)}</div>
+                    <div class="col-md-6"><strong>Description:</strong><br>${escapeHtml(r.description||'')}</div>
+                    <div class="col-md-6"><strong>Status:</strong> ${statusBadge(r.investigationStatus)}</div>
+                    ${r.mediaPath ? `<div class=\"col-md-12\"><strong>Media:</strong><br>${mediaPreview(r.mediaPath)}</div>` : ''}
+                </div>`;
+            document.getElementById('reportDetail').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('reportModal')).show();
+        }
+
+        function mediaPreview(path){
+            const lower = path.toLowerCase();
+            if(lower.endsWith('.mp4')){
+                return `<video controls width="100%" src="${path}"></video>`;
+            }
+            return `<img src="${path}" class="img-fluid rounded border" />`;
+        }
+
+        function statusBadge(s){
+            const map = { PENDING:'status-pending', IN_PROGRESS:'status-in-progress', RESOLVED:'status-resolved', REJECTED:'bg-danger' };
+            const clazz = map[s] || 'bg-secondary';
+            const label = s ? s.replace('_',' ') : '';
+            return `<span class="badge ${clazz}">${label}</span>`;
+        }
+
+        function exportPdf(){ window.location.href = '/api/reports/export/pdf'; }
+        function exportExcel(){ window.location.href = '/api/reports/export/excel'; }
+
+        function val(id){ return document.getElementById(id).value || ''; }
+        function dateVal(id){ const v = val(id); return v ? new Date(v + 'T00:00:00') : null; }
+        function endOfDay(d){ const dt = new Date(d); dt.setHours(23,59,59,999); return dt; }
+        function formatDateTime(dt){ if(!dt) return ''; const d = new Date(dt); return d.toLocaleString(); }
+        function escapeHtml(txt){ const div = document.createElement('div'); div.textContent = txt; return div.innerHTML; }
+        function escapeAttr(txt){ return (txt||'').replace(/"/g,'&quot;'); }
+
+    </script>
+
+</th:block>
+</html>

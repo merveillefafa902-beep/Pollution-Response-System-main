@@ -1,0 +1,359 @@
+/* ===============================================
+   RESPONSIVE DESIGN - MOBILE FIRST APPROACH
+   Bootstrap 5 compatible styles
+   =============================================== */
+
+:root {
+    --bs-primary: #2e8b57;
+    --bs-primary-rgb: 46, 139, 87;
+    --bs-success: #27ae60;
+    --bs-info: #2980b9;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* ===============================================
+   STATUS COLORS
+   =============================================== */
+.status-pending { background-color: #ffc107 !important; color: #000 !important; }
+.status-in-progress { background-color: #fd7e14 !important; color: #fff !important; }
+.status-resolved { background-color: #0d6efd !important; color: #fff !important; }
+
+/* ===============================================
+   CARDS - Responsive with proper spacing
+   =============================================== */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* ===============================================
+   RESPONSIVE TABLES
+   =============================================== */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+}
+
+table {
+    font-size: 0.95rem;
+}
+
+@media (max-width: 767.98px) {
+    table {
+        font-size: 0.85rem;
+    }
+    
+    table thead {
+        display: none; /* Stack table rows on mobile */
+    }
+    
+    table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: white;
+    }
+    
+    table td {
+        display: block;
+        text-align: right;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    table td:last-child {
+        border-bottom: none;
+    }
+    
+    table td:before {
+        content: attr(data-label);
+        float: left;
+        font-weight: 600;
+        color: #666;
+    }
+}
+
+/* ===============================================
+   BUTTONS - Touch friendly on mobile
+   =============================================== */
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+    padding: 0.5rem 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .btn {
+        padding: 0.65rem 1.25rem;
+        min-height: 44px; /* Touch target size */
+        font-size: 0.95rem;
+    }
+    
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-group .btn {
+        width: 100%;
+        border-radius: 6px !important;
+    }
+}
+
+/* ===============================================
+   FORMS - Mobile optimized inputs
+   =============================================== */
+.form-control, .form-select {
+    border-radius: 6px;
+    padding: 0.65rem 1rem;
+    font-size: 1rem;
+}
+
+@media (max-width: 767.98px) {
+    .form-control, .form-select {
+        padding: 0.75rem 1rem;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ===============================================
+   RESPONSIVE GRID ADJUSTMENTS
+   =============================================== */
+.row {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+}
+
+.row > * {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+@media (min-width: 768px) {
+    .row {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+    }
+    
+    .row > * {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+}
+
+/* ===============================================
+   STAT CARDS / DASHBOARD CARDS
+   =============================================== */
+.stat-card {
+    background: linear-gradient(135deg, #2e8b57 0%, #2980b9 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Override Bootstrap Colors */
+.btn-primary { background-color: var(--bs-primary) !important; border-color: var(--bs-primary) !important; }
+.btn-outline-primary { color: var(--bs-primary) !important; border-color: var(--bs-primary) !important; }
+.text-primary { color: var(--bs-primary) !important; }
+.bg-primary { background-color: var(--bs-primary) !important; }
+
+@media (max-width: 575.98px) {
+    .stat-card {
+        padding: 1rem;
+        text-align: center;
+    }
+}
+
+/* ===============================================
+   MODAL RESPONSIVENESS
+   =============================================== */
+@media (max-width: 767.98px) {
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+    }
+}
+
+/* ===============================================
+   UTILITY CLASSES FOR RESPONSIVE SPACING
+   =============================================== */
+.container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 768px) {
+    .container-fluid {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+}
+
+/* ===============================================
+   RESPONSIVE TEXT SIZING
+   =============================================== */
+h1, .h1 { font-size: 1.75rem; }
+h2, .h2 { font-size: 1.5rem; }
+h3, .h3 { font-size: 1.25rem; }
+h4, .h4 { font-size: 1.1rem; }
+
+@media (min-width: 768px) {
+    h1, .h1 { font-size: 2.25rem; }
+    h2, .h2 { font-size: 1.875rem; }
+    h3, .h3 { font-size: 1.5rem; }
+    h4, .h4 { font-size: 1.25rem; }
+}
+
+/* ===============================================
+   CHARTS RESPONSIVE CONTAINER
+   =============================================== */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+    .chart-container {
+        height: 350px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .chart-container {
+        height: 400px;
+    }
+}
+
+canvas {
+    max-width: 100%;
+    height: auto !important;
+}
+
+/* ===============================================
+   MAP RESPONSIVE CONTAINER
+   =============================================== */
+#map, .leaflet-container {
+    width: 100%;
+    height: 350px;
+    border-radius: 8px;
+    z-index: 1;
+}
+
+@media (min-width: 768px) {
+    #map, .leaflet-container {
+        height: 450px;
+    }
+}
+
+@media (min-width: 1200px) {
+    #map, .leaflet-container {
+        height: 550px;
+    }
+}
+
+/* ===============================================
+   TOUCH-FRIENDLY ENHANCEMENTS
+   =============================================== */
+@media (hover: none) and (pointer: coarse) {
+    /* Touch devices */
+    a, button, .nav-link, .btn, .dropdown-toggle {
+        min-height: 44px;
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Larger tap targets for icons */
+    .bi {
+        font-size: 1.25rem;
+    }
+}
+
+/* ===============================================
+   LOADING STATES
+   =============================================== */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* ===============================================
+   PRINT STYLES
+   =============================================== */
+@media print {
+    .sidebar, .navbar, .btn, button {
+        display: none !important;
+    }
+    
+    .content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+    }
+}

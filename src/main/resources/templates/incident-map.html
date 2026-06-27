@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+    th:replace="~{base :: layout(~{::content})}">
+<th:block th:fragment="content">
+
+    <!-- Filters -->
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end">
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Type</label>
+                    <select id="fltType" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option value="Air Pollution">Air Pollution</option>
+                        <option value="Water Pollution">Water Pollution</option>
+                        <option value="Noise Pollution">Noise Pollution</option>
+                        <option value="Soil Pollution">Soil Pollution</option>
+                        <option value="Chemical Pollution">Chemical Pollution</option>
+                        <option value="Waste Dumping">Waste Dumping</option>
+                        <option value="Smoke Pollution">Smoke Pollution</option>
+                        <option value="Other">Other Pollution Type</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Status</label>
+                    <select id="fltStatus" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option>PENDING</option>
+                        <option>IN_PROGRESS</option>
+                        <option>RESOLVED</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Severity</label>
+                    <select id="fltSeverity" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        <option>LOW</option>
+                        <option>MEDIUM</option>
+                        <option>HIGH</option>
+                        <option>CRITICAL</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Region</label>
+                    <select id="fltRegion" class="form-select form-select-sm">
+                        <option value="">All</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">From</label>
+                    <input type="date" id="fltFrom" class="form-control form-control-sm" />
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">To</label>
+                    <input type="date" id="fltTo" class="form-control form-control-sm" />
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Search</label>
+                    <input type="text" id="fltText" placeholder="Description/location" class="form-control form-control-sm" />
+                </div>
+                <div class="col-12 d-flex gap-2 mt-2 flex-wrap">
+                    <button class="btn btn-success btn-sm" onclick="applyMapFilters()"><i class="bi bi-filter"></i> Apply</button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="resetMapFilters()"><i class="bi bi-x-circle"></i> Reset</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="fitAllMarkers()"><i class="bi bi-arrows-fullscreen"></i> Fit All</button>
+                    <button class="btn btn-outline-info btn-sm" onclick="refreshMap()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                    <button class="btn btn-outline-success btn-sm" onclick="toggleLive()" id="liveBtn"><i class="bi bi-broadcast"></i> Live: ON</button>
+                    <div class="ms-auto d-flex gap-2 align-items-center">
+                        <span class="small text-muted" id="filterSummary">Showing all cases</span>
+                        <span class="badge" id="wsStatus" style="display:none;">●</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAP SECTION (Leaflet dynamic map) -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-success mb-0">Live Case Map</h5>
+                <span class="badge bg-secondary" id="caseCount">0 cases</span>
+            </div>
+            <div id="mapLoadingOverlay" class="position-absolute w-100 h-100 d-flex align-items-center justify-content-center bg-white bg-opacity-75" style="z-index:1000; display:none!important;">
+                <div class="text-center">
+                    <div class="spinner-border text-success mb-2" role="status"></div>
+                    <div class="small text-muted">Loading map data...</div>
+                </div>
+            </div>
+            <div id="map" class="border rounded position-relative" style="height:520px;"></div>
+            <div class="mt-3 d-flex justify-content-between align-items-start">
+                <div class="small text-muted d-flex flex-wrap gap-3" id="mapLegend">
+                    <strong class="me-2">Status:</strong>
+                    <span><span class="legend-dot" style="background:gray"></span>Pending</span>
+                    <span><span class="legend-dot" style="background:orange"></span>In Progress</span>
+                    <span><span class="legend-dot" style="background:green"></span>Resolved</span>
+                </div>
+                <div class="small text-muted d-flex flex-wrap gap-3">
+                    <strong class="me-2">Severity:</strong>
+                    <span><span class="legend-dot" style="background:#28a745;border:1px solid #ccc"></span>Low</span>
+                    <span><span class="legend-dot" style="background:#ffc107;border:1px solid #ccc"></span>Medium</span>
+                    <span><span class="legend-dot" style="background:#fd7e14;border:1px solid #ccc"></span>High</span>
+                    <span><span class="legend-dot" style="background:#dc3545;border:1px solid #ccc"></span>Critical</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTIVE INCIDENTS TABLE -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="fw-bold text-success mb-3">Active and Recent Cases</h5>
+            <table class="table table-hover align-middle" id="casesTable">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Region</th>
+                    <th>Status</th>
+                    <th>Assigned To</th>
+                    <th>Reported</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="casesBody">
+                <!-- dynamically populated via map.js -->
+                </tbody>
+            </table>
+
+            <!-- PAGINATION -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <button class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </button>
+                <span class="fw-bold">1</span>
+                <button class="btn btn-outline-secondary btn-sm">
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page-specific scripts -->
+    <!-- Note: Removed integrity/crossorigin to avoid SRI mismatch on some CDNs -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script th:src="@{/map.js}" src="/map.js"></script>
+    
+    <style>
+        .legend-dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+        .leaflet-popup-content { font-size:13px; }
+        .case-popup { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        
+        /* Severity-based cluster styling */
+        .marker-cluster-low div { background-color: rgba(40, 167, 69, 0.6); }
+        .marker-cluster-low span { background-color: #28a745; color: white; }
+        .marker-cluster-medium div { background-color: rgba(255, 193, 7, 0.6); }
+        .marker-cluster-medium span { background-color: #ffc107; color: #212529; }
+        .marker-cluster-high div { background-color: rgba(253, 126, 20, 0.6); }
+        .marker-cluster-high span { background-color: #fd7e14; color: white; }
+        .marker-cluster-critical div { background-color: rgba(220, 53, 69, 0.6); }
+        .marker-cluster-critical span { background-color: #dc3545; color: white; }
+        
+        .marker-cluster div { width: 40px; height: 40px; border-radius: 50%; text-align: center; }
+        .marker-cluster span { display: inline-block; line-height: 28px; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; font-size: 14px; margin: 6px; }
+        
+        #mapLoadingOverlay { display: none !important; }
+        #mapLoadingOverlay.active { display: flex !important; }
+    </style>
+
+</th:block>
+</html>

@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: #1a6b3c !important;
+            font-size: 1rem;
+        }
+
+        .nav-link {
+            color: #333 !important;
+            font-weight: 500;
+            margin: 0 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover {
+            color: #1a6b3c !important;
+        }
+
+        .btn-login {
+            background: transparent;
+            border: 2px solid #1a6b3c;
+            color: #1a6b3c;
+            font-weight: 600;
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+
+        .btn-login:hover {
+            background: #1a6b3c;
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            padding: 80px 0 40px;
+            background-color: #000; /* Fallback */
+        }
+
+        .hero-bg-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: 0;
+            transform: translateX(-50%) translateY(-50%);
+            object-fit: cover;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65); /* Dark overlay for text readability */
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            color: white;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero p.lead {
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.95;
+            animation: fadeInUp 1.2s ease;
+        }
+
+        .hero-buttons {
+            animation: fadeInUp 1.4s ease;
+        }
+
+        .btn-hero {
+            padding: 0.75rem 2rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 50px;
+            margin: 0.5rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary-hero {
+            background: white;
+            color: #1a6b3c;
+            border: 2px solid white;
+        }
+
+        .btn-primary-hero:hover {
+            background: transparent;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-outline-hero {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-outline-hero:hover {
+            background: white;
+            color: #1a6b3c;
+            transform: translateY(-3px);
+        }
+
+        .hero-image {
+            animation: fadeInRight 1.5s ease;
+        }
+
+        .hero-image img {
+            max-width: 100%;
+            height: auto;
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 0;
+            background: #f8f9fa;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-title h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .section-title p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s;
+            height: 100%;
+            text-align: center;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(182, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #1a6b3c, #27ae60);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .feature-card h4 {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: linear-gradient(135deg, #1a6b3c, #145a30);
+            color: white;
+            padding: 80px 0;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .step-card {
+            text-align: center;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #1a6b3c, #27ae60);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 5px 20px rgba(182, 0, 0, 0.3);
+        }
+
+        .step-card h4 {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .step-card p {
+            color: #666;
+        }
+
+        /* CTA Section */
+        .cta {
+            background: linear-gradient(135deg, #1a6b3c, #145a30);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.2rem;
+        }
+
+        .cta p {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.95;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer h5 {
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #1a6b3c;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-links a {
+            color: #ccc;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #1a6b3c;
+        }
+
+        .social-icons a {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: #333;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            margin-right: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .social-icons a:hover {
+            background: #1a6b3c;
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #333;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            text-align: center;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+
+            .hero p.lead {
+                font-size: 0.95rem;
+            }
+
+            .btn-hero {
+                padding: 0.65rem 1.5rem;
+                font-size: 0.9rem;
+                display: block;
+                margin: 0.5rem auto;
+                max-width: 300px;
+            }
+
+            .hero-image {
+                margin-top: 3rem;
+            }
+
+            .section-title h2 {
+                font-size: 1.6rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: #1a6b3c;
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(182, 0, 0, 0.4);
+        }
+
+        .scroll-to-top:hover {
+            background: #145a30;
+            transform: translateY(-5px);
+        }
+
+        .scroll-to-top.show {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <img src="/images/logo1.JPG" alt="ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM Logo" width="40" height="40" /> ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#how-it-works">How It Works</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About</a>
+                    </li>
+                    <li class="nav-item ms-lg-3">
+                        <a href="/login" class="btn btn-login">
+                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <video autoplay muted loop playsinline class="hero-bg-video">
+            <source src="/videos/77247-561990865.mp4" type="video/mp4">
+            Your browser does not support HTML5 video.
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="container" style="position: relative; z-index: 2;">
+            <div class="row align-items-center">
+                <div class="col-lg-6 hero-content">
+                    <h1>ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM</h1>
+                    <p class="lead">
+                        Empowering communities to report, track, and respond to pollutions in real-time.
+                        Protect the environment through citizen-driven pollution monitoring and reporting.
+                    </p>
+                    <div class="hero-buttons">
+                        <a href="/register" class="btn btn-hero btn-primary-hero">
+                            <i class="bi bi-person-plus"></i> Get Started
+                        </a>
+                        <a href="#features" class="btn btn-hero btn-outline-hero">
+                            <i class="bi bi-play-circle"></i> Learn More
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 hero-image text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 420" width="100%" height="auto">
+                        <defs>
+                            <linearGradient id="globeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#27ae60;stop-opacity:0.85" />
+                                <stop offset="100%" style="stop-color:#2ecc71;stop-opacity:0.65" />
+                            </linearGradient>
+                            <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95" />
+                                <stop offset="100%" style="stop-color:#d4efdf;stop-opacity:0.8" />
+                            </linearGradient>
+                            <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#85C1E9;stop-opacity:0.5" />
+                                <stop offset="100%" style="stop-color:#AED6F1;stop-opacity:0.3" />
+                            </linearGradient>
+                            <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color:#fff;stop-opacity:0.25" />
+                                <stop offset="100%" style="stop-color:#fff;stop-opacity:0" />
+                            </radialGradient>
+                            <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                                <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.15"/>
+                            </filter>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                                <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- Soft background glow -->
+                        <circle cx="250" cy="195" r="185" fill="url(#glowGrad)" />
+
+                        <!-- Earth Globe -->
+                        <circle cx="250" cy="195" r="120" fill="url(#globeGrad)" filter="url(#softShadow)" opacity="0.9">
+                            <animateTransform attributeName="transform" type="rotate" from="0 250 195" to="360 250 195" dur="60s" repeatCount="indefinite"/>
+                        </circle>
+                        <!-- Ocean patches -->
+                        <ellipse cx="220" cy="160" rx="35" ry="25" fill="url(#waterGrad)" opacity="0.6" />
+                        <ellipse cx="290" cy="210" rx="28" ry="20" fill="url(#waterGrad)" opacity="0.5" />
+                        <ellipse cx="235" cy="240" rx="22" ry="15" fill="url(#waterGrad)" opacity="0.4" />
+                        <!-- Land masses -->
+                        <path d="M200,155 Q215,140 235,145 Q250,148 248,160 Q245,172 230,170 Q215,168 200,155Z" fill="#1a6b3c" opacity="0.7"/>
+                        <path d="M265,180 Q280,170 300,178 Q310,185 305,200 Q298,210 280,208 Q265,200 265,180Z" fill="#1a6b3c" opacity="0.6"/>
+                        <path d="M225,225 Q240,218 255,225 Q260,235 250,242 Q238,245 225,225Z" fill="#1a6b3c" opacity="0.55"/>
+                        <!-- Globe highlight -->
+                        <ellipse cx="215" cy="155" rx="45" ry="40" fill="#fff" opacity="0.12" />
+
+                        <!-- Pulsing pollution markers on globe -->
+                        <g>
+                            <circle cx="210" cy="155" r="6" fill="#e74c3c" opacity="0.9">
+                                <animate attributeName="r" values="5;9;5" dur="2s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="0.9;0.4;0.9" dur="2s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="210" cy="155" r="12" fill="none" stroke="#e74c3c" stroke-width="1.5" opacity="0.4">
+                                <animate attributeName="r" values="10;18;10" dur="2s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+                            </circle>
+                        </g>
+                        <g>
+                            <circle cx="285" cy="195" r="5" fill="#f39c12" opacity="0.85">
+                                <animate attributeName="r" values="4;8;4" dur="2.5s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="0.85;0.35;0.85" dur="2.5s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="285" cy="195" r="11" fill="none" stroke="#f39c12" stroke-width="1.5" opacity="0.35">
+                                <animate attributeName="r" values="9;16;9" dur="2.5s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="0.35;0;0.35" dur="2.5s" repeatCount="indefinite"/>
+                            </circle>
+                        </g>
+                        <g>
+                            <circle cx="240" cy="235" r="5" fill="#e67e22" opacity="0.8">
+                                <animate attributeName="r" values="4;7;4" dur="3s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="0.8;0.3;0.8" dur="3s" repeatCount="indefinite"/>
+                            </circle>
+                            <circle cx="240" cy="235" r="10" fill="none" stroke="#e67e22" stroke-width="1.5" opacity="0.3">
+                                <animate attributeName="r" values="8;14;8" dur="3s" repeatCount="indefinite"/>
+                                <animate attributeName="opacity" values="0.3;0;0.3" dur="3s" repeatCount="indefinite"/>
+                            </circle>
+                        </g>
+
+                        <!-- Protective Shield overlay and Checkmark -->
+                        <g transform="translate(250, 205) scale(0.75) translate(-250, -195)">
+                            <path d="M250,80 C290,95 340,100 355,100 C355,180 330,260 250,310 C170,260 145,180 145,100 C160,100 210,95 250,80Z"
+                                  fill="url(#shieldGrad)" opacity="0.15" filter="url(#glow)"/>
+                            <path d="M250,80 C290,95 340,100 355,100 C355,180 330,260 250,310 C170,260 145,180 145,100 C160,100 210,95 250,80Z"
+                                  fill="none" stroke="#fff" stroke-width="2" opacity="0.5" stroke-dasharray="8 4">
+                                <animate attributeName="stroke-dashoffset" values="0;24" dur="3s" repeatCount="indefinite"/>
+                            </path>
+
+                            <!-- Checkmark inside shield -->
+                            <path d="M225,195 L243,213 L278,172" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.85" filter="url(#glow)"/>
+                        </g>
+
+                        <!-- Floating leaf 1 -->
+                        <g opacity="0.7">
+                            <animateTransform attributeName="transform" type="translate" values="0,0; 8,-12; 0,0" dur="4s" repeatCount="indefinite"/>
+                            <path d="M100,120 Q115,100 130,120 Q115,115 100,120Z" fill="#2ecc71" opacity="0.8"/>
+                            <line x1="115" y1="110" x2="115" y2="122" stroke="#1a6b3c" stroke-width="1" opacity="0.5"/>
+                        </g>
+                        <!-- Floating leaf 2 -->
+                        <g opacity="0.6">
+                            <animateTransform attributeName="transform" type="translate" values="0,0; -6,10; 0,0" dur="5s" repeatCount="indefinite"/>
+                            <path d="M380,140 Q395,120 410,140 Q395,135 380,140Z" fill="#27ae60" opacity="0.75"/>
+                            <line x1="395" y1="130" x2="395" y2="142" stroke="#1a6b3c" stroke-width="1" opacity="0.5"/>
+                        </g>
+                        <!-- Floating leaf 3 -->
+                        <g opacity="0.55">
+                            <animateTransform attributeName="transform" type="translate" values="0,0; 10,8; 0,0" dur="6s" repeatCount="indefinite"/>
+                            <path d="M120,280 Q135,260 150,280 Q135,275 120,280Z" fill="#2ecc71" opacity="0.7"/>
+                            <line x1="135" y1="270" x2="135" y2="282" stroke="#1a6b3c" stroke-width="1" opacity="0.5"/>
+                        </g>
+                        <!-- Floating leaf 4 -->
+                        <g opacity="0.5">
+                            <animateTransform attributeName="transform" type="translate" values="0,0; -8,-6; 0,0" dur="4.5s" repeatCount="indefinite"/>
+                            <path d="M370,270 Q385,250 400,270 Q385,265 370,270Z" fill="#27ae60" opacity="0.65"/>
+                            <line x1="385" y1="260" x2="385" y2="272" stroke="#1a6b3c" stroke-width="1" opacity="0.5"/>
+                        </g>
+
+                        <!-- Small orbiting dots -->
+                        <circle cx="0" cy="0" r="4" fill="#fff" opacity="0.7">
+                            <animateMotion dur="8s" repeatCount="indefinite" path="M250,195 m-145,0 a145,145 0 1,1 290,0 a145,145 0 1,1 -290,0"/>
+                        </circle>
+                        <circle cx="0" cy="0" r="3" fill="#2ecc71" opacity="0.6">
+                            <animateMotion dur="10s" repeatCount="indefinite" path="M250,195 m-155,0 a155,155 0 1,0 310,0 a155,155 0 1,0 -310,0"/>
+                        </circle>
+
+                        <!-- Bottom label -->
+                        <text x="250" y="375" text-anchor="middle" fill="#fff" font-size="16" font-weight="600" letter-spacing="2" opacity="0.85">
+                            PROTECT · REPORT · RESOLVE
+                        </text>
+                        <line x1="160" y1="385" x2="340" y2="385" stroke="#fff" stroke-width="1" opacity="0.3"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Powerful Features</h2>
+                <p>Everything you need to manage pollution response effectively and efficiently</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-flag-fill"></i>
+                        </div>
+                        <h4>Citizen Reporting</h4>
+                        <p>Citizens can quickly report pollutions with GPS location, photos, videos, and severity
+                            levels.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-map-fill"></i>
+                        </div>
+                        <h4>Real-Time Map</h4>
+                        <p>Interactive map showing all cases with clustering, filtering, and live updates via
+                            WebSocket.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-clipboard-check-fill"></i>
+                        </div>
+                        <h4>Case Verification</h4>
+                        <p>Authorities verify reports, assign responders, and manage case lifecycle from pending to
+                            resolved.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-bell-fill"></i>
+                        </div>
+                        <h4>Instant Alerts</h4>
+                        <p>Real-time notifications via WebSocket and email for assignments, status updates, and daily
+                            summaries.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-bar-chart-fill"></i>
+                        </div>
+                        <h4>Analytics Dashboard</h4>
+                        <p>Comprehensive charts and reports by type, status, region, severity, and time-series trends.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="bi bi-phone-fill"></i>
+                        </div>
+                        <h4>Fully Responsive</h4>
+                        <p>Works seamlessly on mobile phones, tablets, and desktops with touch-friendly controls.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="1247">0</span>
+                        <span class="stat-label">Cases Reported</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="892">0</span>
+                        <span class="stat-label">Issues Resolved</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="45">0</span>
+                        <span class="stat-label">Inspection Teams</span>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="stat-card">
+                        <span class="stat-number" data-target="98">0</span>
+                        <span class="stat-label">% Success Rate</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>How It Works</h2>
+                <p>Simple and efficient pollution response workflow in 4 easy steps</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <h4>Report Case</h4>
+                        <p>Citizens report pollutions with location, photos, and details through web or mobile.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <h4>Verify & Assess</h4>
+                        <p>Authorities verify reports, assess severity, and prioritize based on impact.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <h4>Dispatch Teams</h4>
+                        <p>Field Inspectors are assigned and notified instantly with case details.</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="step-card">
+                        <div class="step-number">4</div>
+                        <h4>Track & Resolve</h4>
+                        <p>Real-time tracking and status updates until case is fully resolved.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <h2>Ready to Make a Difference?</h2>
+            <p>Join thousands of citizens and inspectors using our platform to protect the environment</p>
+            <a href="/register" class="btn btn-hero btn-primary-hero">
+                <i class="bi bi-person-plus"></i> Register Now
+            </a>
+            <a href="/login" class="btn btn-hero btn-outline-hero ms-2">
+                <i class="bi bi-box-arrow-in-right"></i> Sign In
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="about">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <h5><img src="/images/logo1.JPG" alt="ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM Logo" width="40" height="40"
+                            style="border-radius: 50%;" /> ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM</h5>
+                    <p>ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM empowers communities to report and investigate pollution
+                        cases
+                        faster, protecting the environment through technology.</p>
+                    <div class="social-icons mt-3">
+                        <a href="#"><i class="bi bi-facebook"></i></a>
+                        <a href="#"><i class="bi bi-twitter"></i></a>
+                        <a href="#"><i class="bi bi-instagram"></i></a>
+                        <a href="#"><i class="bi bi-linkedin"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <h5>Quick Links</h5>
+                    <ul class="footer-links">
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How It Works</a></li>
+                        <li><a href="/login">Login</a></li>
+                        <li><a href="/register">Register</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h5>Resources</h5>
+                    <ul class="footer-links">
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">API Reference</a></li>
+                        <li><a href="#">Support Center</a></li>
+                        <li><a href="#">Environmental Contacts</a></li>
+                        <li><a href="#">Safety Guidelines</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <h5>Contact Us</h5>
+                    <ul class="footer-links">
+                        <li><i class="bi bi-geo-alt-fill"></i> Nationwide Environmental Coverage</li>
+                        <li><i class="bi bi-telephone-fill"></i> +000 000 000 000</li>
+                        <li><i class="bi bi-envelope-fill"></i> info@environment-based-pollution-reporting-system.io</li>
+                        <li><i class="bi bi-clock-fill"></i> 24/7 Environmental Monitoring</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM. All rights reserved. | Built with ❤️ for
+                    saving lives</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scroll to Top Button -->
+    <div class="scroll-to-top" id="scrollToTop">
+        <i class="bi bi-arrow-up"></i>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Scroll to top button
+        const scrollBtn = document.getElementById('scrollToTop');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                scrollBtn.classList.add('show');
+            } else {
+                scrollBtn.classList.remove('show');
+            }
+        });
+
+        scrollBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // Animated counter for stats
+        const animateCounter = (element) => {
+            const target = parseInt(element.getAttribute('data-target'));
+            const duration = 2000;
+            const step = target / (duration / 16);
+            let current = 0;
+
+            const updateCounter = () => {
+                current += step;
+                if (current < target) {
+                    element.textContent = Math.floor(current);
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    element.textContent = target;
+                }
+            };
+            updateCounter();
+        };
+
+        // Intersection Observer for stats animation
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counters = entry.target.querySelectorAll('.stat-number');
+                    counters.forEach(counter => {
+                        if (counter.textContent === '0') {
+                            animateCounter(counter);
+                        }
+                    });
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        const statsSection = document.querySelector('.stats');
+        if (statsSection) {
+            statsObserver.observe(statsSection);
+        }
+
+        // Navbar background on scroll
+        const navbar = document.querySelector('.navbar');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 50) {
+                navbar.style.boxShadow = '0 2px 20px rgba(0,0,0,0.15)';
+            } else {
+                navbar.style.boxShadow = '0 2px 20px rgba(0,0,0,0.1)';
+            }
+        });
+    </script>
+</body>
+
+</html>

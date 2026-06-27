@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:replace="~{base :: layout(~{::content})}">
+<th:block th:fragment="content">
+
+    <!-- HEADER & FILTERS -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h5 class="fw-bold text-success mb-1">Notifications</h5>
+            <p class="text-muted small mb-0">View and manage all your system notifications</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary btn-sm" onclick="markAllAsRead()">
+                <i class="bi bi-check-all"></i> Mark All Read
+            </button>
+
+        </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <ul class="nav nav-tabs mb-3" id="notifTabs">
+        <li class="nav-item">
+            <a class="nav-link active" href="#" data-filter="all">All</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="unread">Unread</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-filter="read">Read</a>
+        </li>
+    </ul>
+
+    <!-- NOTIFICATIONS LIST -->
+    <div id="notificationsList">
+        <!-- Dynamic content loaded here -->
+    </div>
+
+    <script>
+        let currentFilter = 'all';
+        let allNotifications = [];
+
+        async function loadAllNotifications() {
+            try {
+                const endpoint = currentFilter === 'unread' ? '/api/notifications/unread' : '/api/notifications';
+                const res = await fetch(endpoint);
+                if (!res.ok) return;
+                allNotifications = await res.json();
+
+                if (currentFilter === 'read') {
+                    allNotifications = allNotifications.filter(n => n.read);
+                } else if (currentFilter === 'all') {
+                    // Keep all
+                }
+
+                renderNotifications();
+            } catch (err) {
+                console.error('Failed to load notifications:', err);
+            }
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notificationsList');
+            if (!allNotifications || allNotifications.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="bi bi-bell-slash fs-1 text-muted"></i>
+                        <p class="text-muted mt-3">No notifications found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = allNotifications.map(n => `
+                <div class="card shadow-sm border-0 mb-3 notif-card ${n.read ? 'read' : 'unread'}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi ${getNotifIcon(n.message)} text-success me-2"></i>
+                                    <h6 class="mb-0 fw-semibold">${escapeHtml(n.message)}</h6>
+                                </div>
+                                <div class="d-flex align-items-center gap-3 text-muted small">
+                                    <span><i class="bi bi-clock me-1"></i>${formatTime(n.sentAt)}</span>
+                                    <span><i class="bi bi-person me-1"></i>${n.recipientRole}</span>
+                                    ${n.report ? `<span><i class="bi bi-file-text me-1"></i>Report #${n.report.id}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                ${!n.read ? `<button class="btn btn-sm btn-outline-success" onclick="markAsRead(${n.id})" title="Mark as read"><i class="bi bi-check"></i></button>` : ''}
+                                <span class="badge ${n.read ? 'bg-secondary' : 'bg-warning text-dark'}">${n.read ? 'Read' : 'New'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getNotifIcon(message) {
+            if (message.includes('status updated')) return 'bi-arrow-repeat';
+            if (message.includes('assigned')) return 'bi-person-check-fill';
+            if (message.includes('Report')) return 'bi-exclamation-circle-fill';
+            return 'bi-bell-fill';
+        }
+
+        async function markAsRead(id) {
+            try {
+                await fetch(`/api/notifications/${id}/read`, { method: 'PUT' });
+                loadAllNotifications();
+            } catch (err) {
+                console.error('Failed to mark as read:', err);
+            }
+        }
+
+        async function markAllAsRead() {
+            try {
+                await fetch('/api/notifications/mark-all-read', { method: 'PUT' });
+                loadAllNotifications();
+                // Also update global badge if present
+                if (window.loadNotifications) window.loadNotifications();
+            } catch (err) {
+                console.error('Failed to mark all read:', err);
+            }
+        }
+
+
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} min ago`;
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours}h ago`;
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays}d ago`;
+        }
+
+        // Tab filtering
+        document.getElementById('notifTabs').addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                document.querySelectorAll('#notifTabs .nav-link').forEach(l => l.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.filter;
+                loadAllNotifications();
+            }
+        });
+
+        // Initial load
+        loadAllNotifications();
+    </script>
+
+    <style>
+        .notif-card {
+            transition: all 0.2s ease-in-out;
+            border-radius: 10px;
+            border-left: 4px solid transparent;
+        }
+
+        .notif-card.unread {
+            background-color: #fff8f0;
+            border-left-color: #198754;
+        }
+
+        .notif-card.read {
+            background-color: #f8f9fa;
+            opacity: 0.85;
+        }
+
+        .notif-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-tabs .nav-link {
+            color: #6c757d;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #198754;
+            border-bottom-color: #198754;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+        }
+    </style>
+
+</th:block>
+
+</html>
