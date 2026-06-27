@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:replace="~{base :: layout(~{::content})}">
+<th:block th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">My Submitted Reports</h5>
+        <a href="/report-submit" class="btn btn-sm btn-success"><i class="bi bi-plus-lg"></i> New Report</a>
+    </div>
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle" id="myReportsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Reported At</th>
+                            <th>Status</th>
+                            <th>Media</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="myReportsTbody"><tr><td colspan="7" class="text-center text-muted py-4">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Report Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="detailBody"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let myReports = [];
+        document.addEventListener('DOMContentLoaded', () => loadMyReports());
+
+        async function loadMyReports(){
+            try {
+                const res = await fetch('/api/reports/my');
+                if(!res.ok) throw new Error('Failed');
+                myReports = await res.json();
+                renderMyReports();
+            } catch(err){
+                document.getElementById('myReportsTbody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading reports</td></tr>';
+            }
+        }
+
+        function renderMyReports(){
+            const tbody = document.getElementById('myReportsTbody');
+            if(myReports.length === 0){
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No reports yet. <a href="/report-submit">Submit one now</a>.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = myReports.sort((a,b) => new Date(b.reportedAt) - new Date(a.reportedAt)).map(r => {
+                const media = r.mediaPath ? mediaIcon(r.mediaPath) : '';
+                const canEval = r.investigationStatus === 'RESOLVED';
+                return `<tr>
+                    <td>${r.id}</td>
+                    <td>${escapeHtml(r.pollutionCategory||'')}</td>
+                    <td>${escapeHtml(r.location||'')} (${r.latitude??''}, ${r.longitude??''})</td>
+                    <td>${formatDateTime(r.reportedAt)}</td>
+                    <td>${statusBadge(r.investigationStatus)}</td>
+                    <td>${media}</td>
+                    <td>
+                        <div class='btn-group'>
+                            <button class='btn btn-sm btn-outline-primary' onclick='view(${r.id})'><i class='bi bi-eye'></i></button>
+                            ${canEval ? `<button class='btn btn-sm btn-outline-success' onclick='openEval(${r.id})'><i class="bi bi-star"></i> Evaluate</button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function view(id){
+            const r = myReports.find(x => x.id === id);
+            if(!r) return;
+            const html = `
+                <div class='row g-3'>
+                    <div class='col-md-6'><strong>Type:</strong> ${escapeHtml(r.pollutionCategory||'')}</div>
+                    <div class='col-md-6'><strong>Status:</strong> ${escapeHtml(r.investigationStatus||'')}</div>
+                    <div class='col-md-6'><strong>Reported At:</strong> ${formatDateTime(r.reportedAt)}</div>
+                    <div class='col-md-6'><strong>Location:</strong> ${escapeHtml(r.location||'')} (${r.latitude??''}, ${r.longitude??''})</div>
+                    <div class='col-md-12'><strong>Description:</strong><br>${escapeHtml(r.description||'')}</div>
+                    ${r.mediaPath ? `<div class='col-md-12'><strong>Media:</strong><br>${mediaPreview(r.mediaPath)}</div>` : ''}
+                </div>`;
+            document.getElementById('detailBody').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }
+
+        function statusBadge(s){
+            const map = { PENDING:'status-pending', IN_PROGRESS:'status-in-progress', RESOLVED:'status-resolved' };
+            const clazz = map[s] || 'bg-secondary';
+            const label = s ? s.replace('_',' ') : '';
+            return `<span class='badge ${clazz}'>${label}</span>`;
+        }
+        function openEval(id){
+            const body = document.getElementById('detailBody');
+            body.innerHTML = `
+                <form id='evalForm' onsubmit='submitEval(event, ${id})'>
+                    <div class='mb-3'>
+                        <label class='form-label'>Rating</label>
+                        <select class='form-select' name='rating' required>
+                            <option value=''>Select</option>
+                            <option value='1'>1 - Poor</option>
+                            <option value='2'>2</option>
+                            <option value='3'>3 - Fair</option>
+                            <option value='4'>4</option>
+                            <option value='5'>5 - Excellent</option>
+                        </select>
+                    </div>
+                    <div class='mb-3'>
+                        <label class='form-label'>Comments</label>
+                        <textarea class='form-control' name='comments' rows='3' placeholder='Feedback (optional)'></textarea>
+                    </div>
+                    <div class='d-grid'>
+                        <button class='btn btn-success' type='submit'>Submit Evaluation</button>
+                    </div>
+                </form>`;
+            new bootstrap.Modal(document.getElementById('detailModal')).show();
+        }
+        async function submitEval(e, id){
+            e.preventDefault();
+            const fd = new FormData(document.getElementById('evalForm'));
+            const params = new URLSearchParams();
+            params.append('rating', fd.get('rating'));
+            if(fd.get('comments')) params.append('comments', fd.get('comments'));
+            try{
+                const res = await fetch(`/api/evaluations/report/${id}?` + params.toString(), { method: 'POST' });
+                if(!res.ok) throw new Error('Failed to submit');
+                alert('Thank you for your feedback!');
+                bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+            } catch(err){ alert('Error: ' + err.message); }
+        }
+        function mediaIcon(path){
+            const lower = path.toLowerCase();
+            if(lower.endsWith('.mp4')) return `<i class='bi bi-camera-reels'></i>`;
+            return `<i class='bi bi-image'></i>`;
+        }
+        function mediaPreview(path){
+            const lower = path.toLowerCase();
+            if(lower.endsWith('.mp4')) return `<video controls width='100%' src='${path}'></video>`;
+            return `<img src='${path}' class='img-fluid rounded border' />`;
+        }
+        function formatDateTime(dt){ if(!dt) return ''; const d = new Date(dt); return d.toLocaleString(); }
+        function escapeHtml(txt){ const div = document.createElement('div'); div.textContent = txt; return div.innerHTML; }
+    </script>
+</th:block>
+</html>

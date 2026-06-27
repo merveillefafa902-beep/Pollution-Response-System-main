@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:fragment="layout(content)">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM'">ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM</title>
+
+    <!-- Bootstrap + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <link rel="stylesheet" th:href="@{/style.css}" href="/style.css" />
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        /* Sidebar - fully responsive */
+        .sidebar {
+            width: 250px;
+            min-height: 100vh;
+            background-color: #1a6b3c;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1040;
+            transition: transform 0.3s ease-in-out;
+            transform: translateX(-100%); /* HIDDEN BY DEFAULT */
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar .nav-link {
+            color: #fff;
+            font-weight: 500;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            padding: 12px 16px;
+            transition: all 0.2s;
+        }
+
+        .sidebar .nav-link.active,
+        .sidebar .nav-link:hover {
+            background-color: #fff;
+            color: #1a6b3c;
+        }
+
+        .logout-btn {
+            background: #fff;
+            color: #1a6b3c;
+            font-weight: 600;
+            border: none;
+            width: 100%;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 20px;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Main content area */
+        .content {
+            flex-grow: 1;
+            background-color: #f9f9f9;
+            margin-left: 0;
+            width: 100%;
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1030;
+            transition: opacity 0.3s;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        @media (min-width: 992px) {
+            .content.shifted {
+                margin-left: 250px;
+                width: calc(100% - 250px);
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .content .p-4 {
+                padding: 1rem !important;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .content .p-4 {
+                padding: 0.5rem !important;
+            }
+
+            .sidebar {
+                width: 280px;
+            }
+
+            .sidebar .nav-link {
+                padding: 14px 18px;
+                font-size: 1rem;
+            }
+        }
+
+
+        @media (hover: none) and (pointer: coarse) {
+
+            .sidebar .nav-link,
+            .btn,
+            .dropdown-toggle {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+            }
+        }
+
+        .container-fluid {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Responsive tables */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        canvas,
+        .leaflet-container {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Hide restricted items by default to prevent flashing */
+        li[data-visible-for],
+        a[data-visible-for] {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar d-flex flex-column p-3 text-white" id="sidebar">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="/dashboard" class="d-flex align-items-center text-decoration-none text-white gap-2">
+                    <img src="/images/logo1.JPG" alt="ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM Logo"
+                        style="width:40px;height:40px;object-fit:contain;border-radius:6px;background:#fff;padding:2px;">
+                    <h4 class="fw-bold mb-0" style="font-size:0.95rem;">Environment-Based Pollution Reporting System</h4>
+                </a>
+                <button class="btn btn-link text-white d-lg-none p-0" id="sidebarClose" style="font-size: 1.5rem;">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item" data-visible-for="ADMIN,ENVIRONMENTAL_AUTHORITY,CITIZEN"><a class="nav-link"
+                        th:href="@{/dashboard}"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+
+                <li class="nav-item" data-visible-for="ADMIN,ENVIRONMENTAL_AUTHORITY"><a class="nav-link"
+                        th:href="@{/case-map}"><i class="bi bi-map me-2"></i>Pollution Map</a></li>
+                <li class="nav-item" data-visible-for="CITIZEN"><a class="nav-link" th:href="@{/report-submit}"><i
+                            class="bi bi-flag me-2"></i>Report Case</a>
+                </li>
+                <li class="nav-item" data-visible-for="CITIZEN"><a class="nav-link" th:href="@{/my-reports}"><i
+                            class="bi bi-journal-check me-2"></i>My
+                        Reports</a></li>
+                <li class="nav-item" data-visible-for="ADMIN,ENVIRONMENTAL_AUTHORITY"><a class="nav-link"
+                        th:href="@{/reports}"><i class="bi bi-file-earmark-text me-2"></i>All
+                        Reports</a></li>
+
+
+                <li class="nav-item" data-visible-for="ADMIN,ENVIRONMENTAL_AUTHORITY,CITIZEN"><a class="nav-link"
+                        th:href="@{/notifications}"><i class="bi bi-bell me-2"></i>Notifications</a></li>
+                <li class="nav-item" data-visible-for="ADMIN"><a class="nav-link" th:href="@{/users}"><i
+                            class="bi bi-person-badge me-2"></i>Users</a></li>
+                <li class="nav-item" data-visible-for="ADMIN,ENVIRONMENTAL_AUTHORITY,CITIZEN"><a class="nav-link"
+                        th:href="@{/settings}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content with top header -->
+        <div class="content p-0" th:fragment="content(content)">
+            <!-- Top Header / Navbar -->
+            <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom px-2 px-md-3 position-relative">
+                <div class="container-fluid d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <button class="btn btn-outline-secondary me-3" id="sidebarToggle" aria-label="Toggle sidebar">
+                            <i class="bi bi-list fs-4"></i>
+                        </button>
+                    </div>
+
+                    <div class="position-absolute top-50 start-50 translate-middle text-center d-none d-sm-block">
+                        <h3 class="mb-0 fw-bold" id="hdrWelcomeMsg" style="letter-spacing: 1px; color: #1a6b3c;">Welcome</h3>
+                    </div>
+                    <div class="position-absolute top-50 start-50 translate-middle text-center d-sm-none">
+                        <h4 class="mb-0 fw-bold" id="hdrWelcomeMsgMobile" style="letter-spacing: 0.5px; color: #1a6b3c;">Welcome</h4>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3 ms-auto">
+                        <!-- Notification Bell -->
+                        <div class="dropdown">
+                            <a class="position-relative text-decoration-none" href="#" data-bs-toggle="dropdown"
+                                aria-expanded="false" id="notifBell">
+                                <i class="bi bi-bell fs-5 text-success"></i>
+                                <span
+                                    class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success"
+                                    id="notifBadge" style="display:none;">
+                                    0
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow"
+                                style="width: 350px; max-height: 400px; overflow-y: auto;">
+                                <li class="px-3 py-2 border-bottom">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fw-semibold">Notifications</span>
+                                        <a href="/notifications" class="small text-decoration-none">View All</a>
+                                    </div>
+                                </li>
+                                <div id="notifDropdown">
+                                    <li class="px-3 py-2 text-muted text-center small">No new notifications</li>
+                                </div>
+                            </ul>
+                        </div>
+
+                        <!-- User Profile Dropdown -->
+                        <div class="dropdown">
+                            <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <!-- Profile Image with fallback to initials -->
+                                <div id="hdrProfileImageContainer"
+                                    class="rounded-circle me-2 d-none d-md-flex align-items-center justify-content-center bg-success text-white fw-bold"
+                                    style="width: 36px; height: 36px; font-size: 0.9rem;">
+                                    <span id="hdrInitials">U</span>
+                                </div>
+                                <div class="text-end me-2 d-none d-sm-block">
+                                    <div id="hdrFullName" class="small fw-semibold">User</div>
+                                    <div id="hdrRoles" class="xsmall text-muted" style="font-size: 0.75rem;">Role</div>
+                                </div>
+                                <!-- Mobile: icon or initials -->
+                                <div id="hdrProfileImageContainerMobile"
+                                    class="rounded-circle d-sm-none d-flex align-items-center justify-content-center bg-success text-white fw-bold"
+                                    style="width: 36px; height: 36px; font-size: 0.9rem;">
+                                    <span id="hdrInitialsMobile">U</span>
+                                </div>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li class="px-3 py-2">
+                                    <div class="small text-muted">Signed in as</div>
+                                    <div id="hdrEmail" class="small fw-semibold">email</div>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="/settings"><i
+                                            class="bi bi-gear me-2"></i>Settings</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <form action="/logout" method="post" class="px-3 py-1">
+                                        <button type="submit" class="btn btn-outline-success w-100"><i
+                                                class="bi bi-power me-1"></i>Logout</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="p-2 p-sm-3 p-md-4">
+                <div class="container-fluid">
+                    <th:block th:insert="${content}"></th:block>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar toggle script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarClose = document.getElementById('sidebarClose');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                if (window.innerWidth >= 992) {
+                    document.querySelector('.content').classList.toggle('shifted');
+                } else {
+                    sidebarOverlay.classList.toggle('show');
+                    document.body.style.overflow = sidebar.classList.contains('show') ? 'hidden' : '';
+                }
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('show');
+                if (window.innerWidth >= 992) {
+                    document.querySelector('.content').classList.remove('shifted');
+                } else {
+                    sidebarOverlay.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
+            }
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+            }
+
+            if (sidebarClose) {
+                sidebarClose.addEventListener('click', closeSidebar);
+            }
+
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', closeSidebar);
+            }
+
+            // Close sidebar when clicking outside on desktop
+            document.addEventListener('click', function(event) {
+                if (window.innerWidth >= 992 && sidebar.classList.contains('show')) {
+                    if (!sidebar.contains(event.target) && (!sidebarToggle || !sidebarToggle.contains(event.target))) {
+                        closeSidebar();
+                    }
+                }
+            });
+
+            // Close sidebar on nav link click (mobile only)
+            const navLinks = sidebar.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function () {
+                    if (window.innerWidth < 992) {
+                        closeSidebar();
+                    }
+                });
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 992) {
+                    // When resizing to desktop, keep current toggle state but remove mobile overlay
+                    sidebarOverlay.classList.remove('show');
+                    document.body.style.overflow = '';
+                    if (sidebar.classList.contains('show')) {
+                        document.querySelector('.content').classList.add('shifted');
+                    } else {
+                        document.querySelector('.content').classList.remove('shifted');
+                    }
+                } else {
+                    // When resizing to mobile, remove shifted class and restore overlay if open
+                    document.querySelector('.content').classList.remove('shifted');
+                    if (sidebar.classList.contains('show')) {
+                        sidebarOverlay.classList.add('show');
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
+            });
+        });
+    </script>
+
+    <script th:src="@{/main.js}" src="/main.js"></script>
+</body>
+
+</html>

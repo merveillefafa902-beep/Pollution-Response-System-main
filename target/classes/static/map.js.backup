@@ -1,0 +1,203 @@
+// Dynamic Leaflet map + live updates via REST + WebSocket
+
+document.addEventListener("DOMContentLoaded", () => {
+    console.log("Map.js loaded ✅");
+    const mapEl = document.getElementById('map');
+    if(!mapEl) return;
+
+    // Base map centered roughly on Kigali
+    const map = L.map('map', { zoomControl:true }).setView([-1.95, 30.058], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom:19,
+        attribution:'© OpenStreetMap contributors'
+    }).addTo(map);
+
+    const clusterGroup = L.markerClusterGroup({
+        disableClusteringAtZoom: 16,
+        spiderfyOnEveryZoom: false,
+        showCoverageOnHover: false,
+        maxClusterRadius: 60
+    });
+    map.addLayer(clusterGroup);
+
+    const markerIndex = new Map(); // id -> marker
+    let reportsCache = [];
+    let regionsCache = [];
+    let liveEnabled = true;
+
+    // Filters will be applied from incident-map.html controls
+    function getFilters(){
+        return {
+            type: val('fltType'),
+            status: val('fltStatus'),
+            region: val('fltRegion'),
+            text: val('fltText').toLowerCase(),
+            from: dateVal('fltFrom'),
+            to: dateVal('fltTo')
+        };
+    }
+
+    function statusColor(status){
+        const s = String(status||'').toUpperCase();
+        return ({
+            RECEIVED:'gray', VERIFIED:'blue', RESPONDING:'orange', RESOLVED:'green', CLOSED:'black'
+        })[s] || 'purple';
+    }
+
+    function makeMarker(r){
+        if(r.latitude == null || r.longitude == null) return null;
+        const color = statusColor(r.status);
+        const icon = L.divIcon({
+            html:`<div style="width:16px;height:16px;background:${color};border-radius:50%;border:2px solid #fff;box-shadow:0 0 3px #0004"></div>`,
+            className:'', iconSize:[16,16]
+        });
+        const m = L.marker([r.latitude, r.longitude], { icon });
+        m.bindPopup(popupHtml(r));
+        return m;
+    }
+
+    function popupHtml(r){
+        const regionName = r.region && r.region.name ? r.region.name : '';
+        return `<div class="small">
+            <div class="fw-bold mb-1">${escapeHtml(r.disasterType||'')} <span class="badge bg-secondary">${escapeHtml(r.status||'')}</span></div>
+            <div><strong>ID:</strong> ${r.id}</div>
+            <div><strong>Region:</strong> ${escapeHtml(regionName)}</div>
+            <div><strong>Reported:</strong> ${formatDateTime(r.reportedAt)}</div>
+            <div class="mt-1">${escapeHtml(r.description||'')}</div>
+            ${r.mediaPath ? mediaFragment(r.mediaPath) : ''}
+            <div class="mt-2"><button class="btn btn-sm btn-outline-danger" onclick="focusIncident(${r.id})">Focus</button></div>
+        </div>`;
+    }
+
+    window.focusIncident = function(id){
+        const r = reportsCache.find(x => x.id === id);
+        if(!r || r.latitude==null || r.longitude==null) return;
+        map.setView([r.latitude, r.longitude], 16);
+        const marker = markerIndex.get(id);
+        if(marker) marker.openPopup();
+    };
+
+    function mediaFragment(path){
+        const lower = path.toLowerCase();
+        if(lower.endsWith('.mp4')) return `<video src="${path}" style="max-width:220px" controls></video>`;
+        return `<img src="${path}" style="max-width:220px" class="rounded border mt-1" />`;
+    }
+
+    function renderMarkers(list){
+        clusterGroup.clearLayers();
+        markerIndex.clear();
+        list.forEach(r => {
+            const m = makeMarker(r);
+            if(m){
+                clusterGroup.addLayer(m);
+                markerIndex.set(r.id, m);
+            }
+        });
+    }
+
+    function renderTable(list){
+        const tbody = document.getElementById('incidentsBody');
+        if(!tbody) return;
+        if(list.length===0){
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No incidents match filters.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = list.sort((a,b)=> new Date(b.reportedAt)-new Date(a.reportedAt)).slice(0,150).map(r => {
+            const regionName = r.region && r.region.name ? r.region.name : '';
+            return `<tr>
+                <td>${r.id}</td>
+                <td>${escapeHtml(r.disasterType||'')}</td>
+                <td>${escapeHtml(regionName)}</td>
+                <td><span class="badge" style="background:${statusColor(r.status)}">${r.status}</span></td>
+                <td>${r.assignedOfficer ? escapeHtml(r.assignedOfficer.fullName || r.assignedOfficer.username) : ''}</td>
+                <td>${formatDateTime(r.reportedAt)}</td>
+                <td><button class="btn btn-sm btn-outline-primary" onclick="focusIncident(${r.id})"><i class="bi bi-crosshair"></i></button></td>
+            </tr>`;
+        }).join('');
+    }
+
+    function applyMapFilters(){
+        const f = getFilters();
+        const filtered = reportsCache.filter(r => {
+            if(f.type && (r.disasterType||'').toUpperCase() !== f.type.toUpperCase()) return false;
+            if(f.status && r.status !== f.status) return false;
+            const regName = r.region && r.region.name ? r.region.name : '';
+            if(f.region && regName !== f.region) return false;
+            if(f.text){
+                const blob = `${r.description||''} ${r.location||''}`.toLowerCase();
+                if(!blob.includes(f.text)) return false;
+            }
+            if(f.from && (!r.reportedAt || new Date(r.reportedAt) < f.from)) return false;
+            if(f.to && (!r.reportedAt || new Date(r.reportedAt) > endOfDay(f.to))) return false;
+            return true;
+        });
+        renderMarkers(filtered);
+        renderTable(filtered);
+    }
+    window.applyMapFilters = applyMapFilters;
+
+    function resetMapFilters(){ ['fltType','fltStatus','fltRegion','fltFrom','fltTo','fltText'].forEach(id => setVal(id,'')); applyMapFilters(); }
+    window.resetMapFilters = resetMapFilters;
+
+    function fitAllMarkers(){
+        if(clusterGroup.getLayers().length === 0) return;
+        map.fitBounds(clusterGroup.getBounds().pad(0.15));
+    }
+    window.fitAllMarkers = fitAllMarkers;
+
+    function toggleLive(){
+        liveEnabled = !liveEnabled;
+        const btn = document.getElementById('liveBtn');
+        if(btn){ btn.innerHTML = `<i class="bi bi-broadcast"></i> Live: ${liveEnabled?'ON':'OFF'}`; }
+    }
+    window.toggleLive = toggleLive;
+
+    async function loadRegions(){
+        try { const r = await fetch('/api/regions'); if(!r.ok) return; regionsCache = await r.json(); populateRegionFilter(); } catch {}
+    }
+    function populateRegionFilter(){
+        const sel = document.getElementById('fltRegion');
+        if(!sel) return; sel.innerHTML = '<option value="">All</option>' + regionsCache.map(x=>`<option value="${escapeAttr(x.name)}">${escapeHtml(x.name)}</option>`).join('');
+    }
+
+    async function loadReports(){
+        try {
+            const res = await fetch('/api/reports');
+            if(!res.ok) throw new Error('Failed');
+            const all = await res.json();
+            // Map shows only approved (VERIFIED+) reports by default
+            reportsCache = all.filter(r => r.status !== 'RECEIVED');
+            applyMapFilters();
+        } catch(e){ console.error('Failed to load reports', e); }
+    }
+
+    // Initial load
+    Promise.all([loadRegions(), loadReports()]).then(()=> fitAllMarkers());
+
+    // Live updates if enabled
+    if(window.SockJS && window.Stomp){
+        const socket = new SockJS('/ws');
+        const stompClient = Stomp.over(socket);
+        stompClient.connect({}, () => {
+            stompClient.subscribe('/topic/reports', (message) => {
+                if(!liveEnabled) return;
+                try {
+                    const rpt = JSON.parse(message.body);
+                    // Update cache
+                    const idx = reportsCache.findIndex(x => x.id === rpt.id);
+                    if(idx >= 0) reportsCache[idx] = rpt; else reportsCache.push(rpt);
+                    applyMapFilters();
+                } catch(err){ console.warn('Invalid live report', err); }
+            });
+        });
+    }
+
+    // Utilities
+    function val(id){ const el = document.getElementById(id); return el ? el.value : ''; }
+    function setVal(id,v){ const el = document.getElementById(id); if(el) el.value = v; }
+    function dateVal(id){ const v = val(id); return v ? new Date(v + 'T00:00:00') : null; }
+    function endOfDay(d){ const dt = new Date(d); dt.setHours(23,59,59,999); return dt; }
+    function formatDateTime(dt){ if(!dt) return ''; const d = new Date(dt); return d.toLocaleString(); }
+    function escapeHtml(t){ const div = document.createElement('div'); div.textContent = t; return div.innerHTML; }
+    function escapeAttr(t){ return (t||'').replace(/"/g,'&quot;'); }
+});

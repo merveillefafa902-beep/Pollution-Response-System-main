@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: linear-gradient(120deg, #1a6b3c, #27ae60);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .register-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 420px;
+            padding: 35px 30px;
+        }
+
+        .register-card h4 {
+            color: #1a6b3c;
+            font-weight: 700;
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .btn-register {
+            background-color: #1a6b3c;
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-register:hover {
+            background-color: #145a30;
+        }
+
+        .text-link a {
+            color: #1a6b3c;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .text-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="register-card">
+        <!-- Home Icon Link -->
+        <div class="text-start mb-2">
+            <a href="/" class="text-decoration-none d-inline-flex align-items-center" title="Back to Home">
+                <i class="bi bi-house-fill fs-5 text-success me-1"></i>
+                <span class="small text-success fw-semibold">Home</span>
+            </a>
+        </div>
+
+        <div class="text-center mb-3">
+            <img src="/images/logo1.JPG" alt="ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM Logo" width="60" height="60" />
+            <h4 class="mt-2 fs-5">ENVIRONMENT-BASED POLLUTION REPORTING SYSTEM</h4>
+            <p class="text-muted small">Create your account</p>
+        </div>
+
+        <form th:action="@{/register}" method="post" th:object="${user}">
+            <!-- Error messages will be handled by SweetAlert below -->
+
+            <div class="mb-3">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="fullName" class="form-control" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" placeholder="Enter a username" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" placeholder="Enter your email" required
+                    pattern="^[\w-\.]+@[a-zA-Z][a-zA-Z-]*(\.[a-zA-Z][a-zA-Z-]*)*\.[a-zA-Z]{2,}$"
+                    title="Email domain must start with a letter, contain no numbers, and have a valid TLD (e.g., .com, .rw)">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Phone</label>
+                <input type="text" name="phone" class="form-control" placeholder="07..." required
+                    pattern="^07[2389]\d{7}$" title="Phone must start with 078, 079, 072, or 073 followed by 7 digits">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="Minimum 6 characters" required
+                    minlength="6">
+            </div>
+
+
+            <!-- Hidden field for role - always CITIZEN for public registration -->
+            <input type="hidden" name="role" value="CITIZEN" />
+
+            <button type="submit" class="btn btn-register w-100 mt-2">Create Account</button>
+        </form>
+
+        <div class="text-center mt-3 text-link">
+            <p>Already have an account? <a th:href="@{/login}">Sign In</a></p>
+        </div>
+    </div>
+
+    <script>
+        const emailInput = document.querySelector('input[name="email"]');
+        const phoneInput = document.querySelector('input[name="phone"]');
+
+        const emailRegex = /^[\w-\.]+@[a-zA-Z][a-zA-Z-]*(\.[a-zA-Z][a-zA-Z-]*)*\.[a-zA-Z]{2,}$/;
+        const phoneRegex = /^07[2389]\d{7}$/;
+
+        function validateInput(input, regex, msg) {
+            input.addEventListener('input', () => {
+                const value = input.value;
+                if (!regex.test(value)) {
+                    input.setCustomValidity(msg);
+                } else {
+                    input.setCustomValidity('');
+                }
+            });
+            // Initial check if value exists
+            if (input.value) {
+                if (!regex.test(input.value)) {
+                    input.setCustomValidity(msg);
+                }
+            }
+        }
+
+        if (emailInput) {
+            validateInput(emailInput, emailRegex, 'Email domain must start with a letter, contain no numbers, and have a valid TLD (e.g., .com, .rw)');
+        }
+        if (phoneInput) {
+            validateInput(phoneInput, phoneRegex, 'Phone must start with 078, 079, 072, or 073 followed by 7 digits');
+        }
+    </script>
+</body>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script th:if="${error}" th:inline="javascript">
+        document.addEventListener("DOMContentLoaded", function() {
+            var errorMessage = /*[[${error}]]*/ 'An error occurred during registration.';
+            Swal.fire({
+                icon: 'error',
+                title: 'Registration Failed',
+                text: errorMessage,
+                confirmButtonColor: '#1a6b3c'
+            });
+        });
+    </script>
+</html>

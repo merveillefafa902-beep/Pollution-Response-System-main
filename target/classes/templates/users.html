@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:replace="~{base :: layout(~{::content})}">
+<th:block th:fragment="content">
+    <!-- ACTION BAR -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="w-50">
+            <input type="text" class="form-control shadow-sm" placeholder="Search user by name or role">
+        </div>
+        <button class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-person-plus-fill"></i> Add New User
+        </button>
+    </div>
+
+    <!-- USERS TABLE -->
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="fw-bold text-success mb-3">System Users</h5>
+            <table class="table table-hover align-middle" id="usersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Full Name</th>
+                        <th>Username</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="usersBody">
+                    <!-- Dynamic rows loaded by JS -->
+                </tbody>
+            </table>
+
+            <!-- PAGINATION -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <button class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-chevron-left"></i> Previous
+                </button>
+                <span class="fw-bold">1</span>
+                <button class="btn btn-outline-secondary btn-sm">
+                    Next <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPTIONAL STYLES -->
+    <style>
+        .table th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+
+    <!-- CREATE USER MODAL -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createUserForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" name="fullName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required
+                                pattern="^[\w-\.]+@[a-zA-Z][a-zA-Z-]*(\.[a-zA-Z][a-zA-Z-]*)*\.[a-zA-Z]{2,}$"
+                                title="Email domain must start with a letter, contain no numbers, and have a valid TLD">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control" pattern="^07[2389]\d{7}$"
+                                title="Phone must start with 078, 079, 072, or 073 followed by 7 digits">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Roles (Ctrl+Click to select multiple)</label>
+                            <select name="roles" class="form-select" multiple required>
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="ENVIRONMENTAL_AUTHORITY">ENVIRONMENTAL_AUTHORITY</option>
+                                <option value="CITIZEN">CITIZEN</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-info">Password will be generated automatically and emailed.</div>
+                        <button type="submit" class="btn btn-success w-100">Create User</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE PHOTO MODAL -->
+    <div class="modal fade" id="changePhotoModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Change User Photo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePhotoForm">
+                        <input type="hidden" name="photoUserId">
+                        <div class="mb-3">
+                            <label class="form-label">Upload New Photo</label>
+                            <input type="file" name="file" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp" required>
+                        </div>
+                        <button type="submit" class="btn btn-info w-100" id="uploadPhotoBtn">Upload Photo</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT USER MODAL -->
+    <div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editUserForm">
+                        <input type="hidden" name="id">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" name="fullName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Username</label>
+                            <input type="text" name="username" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required
+                                pattern="^[\w-\.]+@[a-zA-Z][a-zA-Z-]*(\.[a-zA-Z][a-zA-Z-]*)*\.[a-zA-Z]{2,}$"
+                                title="Email domain must start with a letter, contain no numbers, and have a valid TLD">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="phone" class="form-control" pattern="^07[2389]\d{7}$"
+                                title="Phone must start with 078, 079, 072, or 073 followed by 7 digits">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Roles (Ctrl+Click to select multiple)</label>
+                            <select name="roles" class="form-select" multiple required>
+                                <option value="ADMIN">ADMIN</option>
+                                <option value="ENVIRONMENTAL_AUTHORITY">ENVIRONMENTAL_AUTHORITY</option>
+                                <option value="CITIZEN">CITIZEN</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="ACTIVE">ACTIVE</option>
+                                <option value="SUSPENDED">SUSPENDED</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Save Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/users');
+                if (!res.ok) {
+                    document.getElementById('usersBody').innerHTML =
+                        `<tr><td colspan="6" class="text-center text-danger py-3">Error loading users (${res.status}). Check console for details.</td></tr>`;
+                    console.error('Failed to load users:', res.status, await res.text());
+                    return;
+                }
+                const users = await res.json();
+                const tbody = document.getElementById('usersBody');
+                tbody.innerHTML = '';
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No users found.</td></tr>';
+                    return;
+                }
+                users.forEach(u => {
+                    const roles = (u.roles || []).join(', ');
+                    const rolesArr = u.roles || [];
+                    const badgeClass = rolesArr.includes('ADMIN') ? 'bg-success'
+                        : rolesArr.includes('ENVIRONMENTAL_AUTHORITY') ? 'bg-info text-dark'
+                        : 'bg-secondary';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${u.id}</td>
+                        <td>${u.fullName || ''}</td>
+                        <td>${u.username}</td>
+                        <td><span class="badge ${badgeClass}">${roles}</span></td>
+                        <td><span class="badge ${u.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'}">${u.status || ''}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info" onclick="changeUserPhoto(${u.id})" title="Change Photo"><i class="bi bi-camera"></i></button>
+                            <button class="btn btn-sm btn-outline-success" onclick='openEditModal(${JSON.stringify(u).replace(/'/g, "&apos;")})' title="Edit User"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="resetPassword(${u.id})" title="Reset Password"><i class="bi bi-key"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.id})" title="Delete"><i class="bi bi-trash"></i></button>
+                        </td>`;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                document.getElementById('usersBody').innerHTML =
+                    `<tr><td colspan="6" class="text-center text-danger py-3">Failed to load users: ${err.message}</td></tr>`;
+                console.error('loadUsers error:', err);
+            }
+        }
+
+        async function resetPassword(id) {
+            if (!confirm('Reset password for this user?')) return;
+            const res = await fetch(`/api/users/${id}/reset-password`, { method: 'POST' });
+            if (res.ok) {
+                alert('Password reset and emailed to user.');
+            } else {
+                alert('Failed to reset password');
+            }
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Delete this user?')) return;
+            const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                loadUsers();
+            } else {
+                alert('Failed to delete user');
+            }
+        }
+
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const data = {
+                fullName: form.fullName.value,
+                username: form.username.value,
+                email: form.email.value,
+                phone: form.phone.value,
+                roles: Array.from(form.roles.selectedOptions).map(o => o.value)
+            };
+            const res = await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                form.reset();
+                loadUsers();
+                const modalEl = document.getElementById('createUserModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+            } else {
+                try {
+                    const errorData = await res.json();
+                    alert('Failed to create user: ' + (errorData.error || 'Unknown error'));
+                } catch (err) {
+                    alert('Failed to create user (Server Error)');
+                }
+            }
+        });
+
+        // Edit Modal Open Logic
+        function openEditModal(u) {
+            const form = document.getElementById('editUserForm');
+            form.id.value = u.id;
+            form.fullName.value = u.fullName || '';
+            form.username.value = u.username || '';
+            form.email.value = u.email || '';
+            form.phone.value = u.phone || '';
+            form.status.value = u.status || 'ACTIVE';
+            
+            // Set roles in multiple select
+            Array.from(form.roles.options).forEach(opt => {
+                opt.selected = (u.roles || []).includes(opt.value);
+            });
+
+            const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            modal.show();
+        }
+
+        // Edit User Submit Logic
+        document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.id.value;
+            const data = {
+                fullName: form.fullName.value,
+                username: form.username.value,
+                email: form.email.value,
+                phone: form.phone.value,
+                status: form.status.value,
+                roles: Array.from(form.roles.selectedOptions).map(o => o.value)
+            };
+            const res = await fetch(`/api/users/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                loadUsers();
+                const modalEl = document.getElementById('editUserModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                modal.hide();
+            } else {
+                alert('Failed to update user');
+            }
+        });
+
+        // Change User Photo Logic
+        function changeUserPhoto(id) {
+            const form = document.getElementById('changePhotoForm');
+            form.photoUserId.value = id;
+            form.file.value = '';
+            new bootstrap.Modal(document.getElementById('changePhotoModal')).show();
+        }
+
+        document.getElementById('changePhotoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.photoUserId.value;
+            const file = form.file.files[0];
+            if (!file) return;
+
+            const btn = document.getElementById('uploadPhotoBtn');
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`/api/users/${id}/profile-image`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    loadUsers();
+                    bootstrap.Modal.getInstance(document.getElementById('changePhotoModal')).hide();
+                } else {
+                    const data = await res.json();
+                    alert('Upload failed: ' + (data.error || 'Unknown error'));
+                }
+            } catch (err) {
+                alert('Upload failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Upload Photo';
+            }
+        });
+
+        loadUsers();
+
+        // Validation for Create User Form
+        const emailRegex = /^[\w-\.]+@[a-zA-Z][a-zA-Z-]*(\.[a-zA-Z][a-zA-Z-]*)*\.[a-zA-Z]{2,}$/;
+        const phoneRegex = /^07[2389]\d{7}$/;
+
+        const createForm = document.getElementById('createUserForm');
+        if (createForm) {
+            const emailInput = createForm.querySelector('input[name="email"]');
+            const phoneInput = createForm.querySelector('input[name="phone"]');
+
+            if (emailInput) {
+                emailInput.addEventListener('input', () => {
+                    if (emailInput.value && !emailRegex.test(emailInput.value)) {
+                        emailInput.setCustomValidity('Email domain must start with a letter, contain no numbers, and have a valid TLD');
+                    } else {
+                        emailInput.setCustomValidity('');
+                    }
+                });
+            }
+
+            if (phoneInput) {
+                phoneInput.addEventListener('input', () => {
+                    if (phoneInput.value && !phoneRegex.test(phoneInput.value)) {
+                        phoneInput.setCustomValidity('Phone must start with 078, 079, 072, or 073 followed by 7 digits');
+                    } else {
+                        phoneInput.setCustomValidity('');
+                    }
+                });
+            }
+        }
+    </script>
+
+</th:block>
+
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en" th:replace="~{base :: layout(~{::content})}">
+<th:block th:fragment="content">
+
+    <div class="mb-4">
+        <h5 class="fw-bold text-success">Account Settings</h5>
+        <p class="text-muted small mb-0">Update your profile, username, and password.</p>
+    </div>
+
+    <!-- Profile Image Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-person-circle me-2"></i>Profile Picture</h6>
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <!-- Current Profile Image Preview -->
+                            <div id="currentProfileImage"
+                                class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center fw-bold"
+                                style="width: 100px; height: 100px; font-size: 2rem;">
+                                <span id="currentInitials">U</span>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <form id="profileImageForm" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label class="form-label">Choose a new profile picture</label>
+                                    <input type="file" class="form-control" id="profileImageInput"
+                                        accept="image/jpeg,image/png,image/gif,image/webp" required>
+                                    <small class="text-muted">Max size: 5MB. Formats: JPG, PNG, GIF, WEBP</small>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button class="btn btn-success" type="submit" id="uploadBtn">
+                                        <i class="bi bi-upload"></i> Upload Image
+                                    </button>
+                                    <button class="btn btn-outline-success" type="button" id="deleteImageBtn">
+                                        <i class="bi bi-trash"></i> Remove Picture
+                                    </button>
+                                </div>
+                                <div id="profileImageMsg" class="mt-2 small"></div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Profile Info -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Profile</h6>
+                    <form id="profileForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control" name="fullName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email"
+                                pattern="^[\w-\.]+@[a-zA-Z][a-zA-Z-]*(\.[a-zA-Z][a-zA-Z-]*)*\.[a-zA-Z]{2,}$"
+                                title="Email domain must start with a letter, contain no numbers, and have a valid TLD">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" name="phone" pattern="^07[2389]\d{7}$"
+                                title="Phone must start with 078, 079, 072, or 073 followed by 7 digits">
+                        </div>
+                        <button class="btn btn-success" type="submit">Save Profile</button>
+                        <span id="profileMsg" class="ms-2 small"></span>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Username + Password -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Change Username</h6>
+                    <form id="usernameForm">
+                        <div class="mb-3">
+                            <label class="form-label">Current Username</label>
+                            <input type="text" class="form-control" name="currentUsername" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Username</label>
+                            <input type="text" class="form-control" name="newUsername" required>
+                        </div>
+                        <button class="btn btn-outline-success" type="submit">Update Username</button>
+                        <span id="usernameMsg" class="ms-2 small"></span>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Change Password</h6>
+                    <form id="passwordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password" class="form-control" name="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" class="form-control" name="newPassword" required>
+                        </div>
+                        <button class="btn btn-outline-success" type="submit">Update Password</button>
+                        <span id="passwordMsg" class="ms-2 small"></span>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        async function loadCurrent() {
+            const r = await fetch('/api/users/current');
+            if (!r.ok) return;
+            const u = await r.json();
+            currentUser = u;
+
+            const pf = document.getElementById('profileForm');
+            pf.fullName.value = u.fullName || '';
+            pf.email.value = u.email || '';
+            pf.phone.value = u.phone || '';
+            const uf = document.getElementById('usernameForm');
+            uf.currentUsername.value = u.username;
+
+            // Update profile image preview
+            updateProfileImagePreview(u);
+        }
+
+        function updateProfileImagePreview(user) {
+            const container = document.getElementById('currentProfileImage');
+            const initialsEl = document.getElementById('currentInitials');
+
+            // Generate initials
+            const fullName = user.fullName || user.username || 'User';
+            const initials = fullName.split(' ')
+                .map(n => n[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+
+            if (user.profileImagePath && user.profileImagePath.trim() !== '') {
+                // Show uploaded image
+                container.style.backgroundImage = `url('${user.profileImagePath}')`;
+                container.style.backgroundSize = 'cover';
+                container.style.backgroundPosition = 'center';
+                container.classList.remove('bg-success');
+                initialsEl.style.display = 'none';
+            } else {
+                // Show initials
+                container.style.backgroundImage = 'none';
+                container.classList.add('bg-success');
+                initialsEl.style.display = 'flex';
+                initialsEl.textContent = initials;
+            }
+        }
+
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const f = e.target; const msg = document.getElementById('profileMsg');
+            const params = new URLSearchParams({
+                fullName: f.fullName.value,
+                email: f.email.value,
+                phone: f.phone.value
+            });
+            const r = await fetch('/api/users/current/profile?' + params.toString(), { method: 'PUT' });
+            msg.textContent = r.ok ? 'Saved' : 'Failed';
+            msg.className = r.ok ? 'text-success ms-2 small' : 'text-danger ms-2 small';
+        });
+
+        document.getElementById('usernameForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const f = e.target; const msg = document.getElementById('usernameMsg');
+            const params = new URLSearchParams({ newUsername: f.newUsername.value });
+            const r = await fetch('/api/users/current/username?' + params.toString(), { method: 'PUT' });
+            if (r.ok) {
+                msg.textContent = 'Updated, please re-login';
+                msg.className = 'text-success ms-2 small';
+                loadCurrent();
+            } else {
+                const text = await r.text();
+                msg.textContent = text || 'Failed';
+                msg.className = 'text-danger ms-2 small';
+            }
+        });
+
+        document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const f = e.target; const msg = document.getElementById('passwordMsg');
+            const params = new URLSearchParams({
+                currentPassword: f.currentPassword.value,
+                newPassword: f.newPassword.value
+            });
+            const r = await fetch('/api/users/current/password?' + params.toString(), { method: 'PUT' });
+            msg.textContent = r.ok ? 'Password updated' : 'Incorrect current password';
+            msg.className = r.ok ? 'text-success ms-2 small' : 'text-danger ms-2 small';
+            if (r.ok) { f.reset(); }
+        });
+
+        // Profile Image Upload
+        document.getElementById('profileImageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('profileImageMsg');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileInput = document.getElementById('profileImageInput');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                msg.textContent = 'Please select an image file';
+                msg.className = 'mt-2 small text-danger';
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            // Client-side validation
+            const maxSize = 5 * 1024 * 1024; // 5MB
+            if (file.size > maxSize) {
+                msg.textContent = 'File size exceeds 5MB limit';
+                msg.className = 'mt-2 small text-danger';
+                return;
+            }
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                msg.textContent = 'Invalid file type. Please use JPG, PNG, GIF, or WEBP';
+                msg.className = 'mt-2 small text-danger';
+                return;
+            }
+
+            // Show loading state
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Uploading...';
+            msg.textContent = 'Uploading...';
+            msg.className = 'mt-2 small text-info';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/api/users/current/profile-image', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    msg.textContent = 'Profile picture updated successfully!';
+                    msg.className = 'mt-2 small text-success';
+
+                    // Reload user data to update preview
+                    await loadCurrent();
+
+                    // Reload page header to show new image
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    const error = await response.json();
+                    msg.textContent = 'Error: ' + (error.error || 'Upload failed');
+                    msg.className = 'mt-2 small text-danger';
+                }
+            } catch (error) {
+                msg.textContent = 'Error: ' + error.message;
+                msg.className = 'mt-2 small text-danger';
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="bi bi-upload"></i> Upload Image';
+                fileInput.value = ''; // Reset file input
+            }
+        });
+
+        // Delete Profile Image
+        document.getElementById('deleteImageBtn').addEventListener('click', async () => {
+            if (!currentUser || !currentUser.profileImagePath) {
+                const msg = document.getElementById('profileImageMsg');
+                msg.textContent = 'No profile picture to remove';
+                msg.className = 'mt-2 small text-warning';
+                return;
+            }
+
+            if (!confirm('Are you sure you want to remove your profile picture?')) {
+                return;
+            }
+
+            const msg = document.getElementById('profileImageMsg');
+            msg.textContent = 'Removing...';
+            msg.className = 'mt-2 small text-info';
+
+            try {
+                const response = await fetch('/api/users/current/profile-image', {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    msg.textContent = 'Profile picture removed successfully!';
+                    msg.className = 'mt-2 small text-success';
+
+                    // Reload user data
+                    await loadCurrent();
+
+                    // Reload page header
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    const error = await response.json();
+                    msg.textContent = 'Error: ' + (error.error || 'Delete failed');
+                    msg.className = 'mt-2 small text-danger';
+                }
+            } catch (error) {
+                msg.textContent = 'Error: ' + error.message;
+                msg.className = 'mt-2 small text-danger';
+            }
+        });
+
+        loadCurrent();
+
+        // Input Validation
+        const emailRegex = /^[\w-\.]+@[a-zA-Z][a-zA-Z-]*(\.[a-zA-Z][a-zA-Z-]*)*\.[a-zA-Z]{2,}$/;
+        const phoneRegex = /^07[2389]\d{7}$/;
+
+        function setupValidation() {
+            const pf = document.getElementById('profileForm');
+            if (!pf) return;
+
+            const emailInput = pf.querySelector('input[name="email"]');
+            const phoneInput = pf.querySelector('input[name="phone"]');
+
+            if (emailInput) {
+                emailInput.addEventListener('input', () => {
+                    if (emailInput.value && !emailRegex.test(emailInput.value)) {
+                        emailInput.setCustomValidity('Email domain must start with a letter, contain no numbers, and have a valid TLD');
+                    } else {
+                        emailInput.setCustomValidity('');
+                    }
+                });
+            }
+
+            if (phoneInput) {
+                phoneInput.addEventListener('input', () => {
+                    if (phoneInput.value && !phoneRegex.test(phoneInput.value)) {
+                        phoneInput.setCustomValidity('Phone must start with 078, 079, 072, or 073 followed by 7 digits');
+                    } else {
+                        phoneInput.setCustomValidity('');
+                    }
+                });
+            }
+        }
+
+        // Run setup after loading (or immediately since elements exist)
+        setupValidation();
+
+    </script>
+
+</th:block>
+
+</html>
